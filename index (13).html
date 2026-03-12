@@ -1621,7 +1621,7 @@ function toast(msg,type='ok'){
    Khi dev local: để nguyên http://localhost:3001
    Sau khi deploy Render: đổi thành URL Render của bạn
 ══════════════════════════════════════════════════════════ */
-const API_URL = 'https://kho-hoc-lieu-backend.onrender.com';
+const API_URL = 'http://localhost:3001';
 
 function getToken()  { return localStorage.getItem('khl_token'); }
 function setToken(t) { localStorage.setItem('khl_token', t); }
@@ -1666,10 +1666,10 @@ function renderStuMgr() {
   } else {
     pendEl.innerHTML = pending.map(s => `
       <div class="stu-card pending">
-        <div class="stu-avatar">${(s.full_name||'?').charAt(0).toUpperCase()}</div>
+        <div class="stu-avatar">${(s.name||s.full_name||'?').charAt(0).toUpperCase()}</div>
         <div class="stu-info">
-          <div class="stu-name">${esc(s.full_name||'')}</div>
-          <div class="stu-user">@${esc(s.username||'')} · Đăng ký: ${new Date(s.created_at||0).toLocaleDateString('vi-VN')}</div>
+          <div class="stu-name">${esc(s.name||s.full_name||'')}</div>
+          <div class="stu-user">@${esc(s.user||s.username||'')} · Đăng ký: ${new Date(s.createdAt||s.created_at||0).toLocaleDateString('vi-VN')}</div>
         </div>
         <div class="stu-actions">
           <button class="stu-btn stu-btn-approve" onclick="approveStu('${s.id}')">✅ Duyệt</button>
@@ -1685,10 +1685,10 @@ function renderStuMgr() {
   } else {
     appEl.innerHTML = approved.map(s => `
       <div class="stu-card">
-        <div class="stu-avatar" style="background:linear-gradient(135deg,#059669,#10b981);">${(s.full_name||'?').charAt(0).toUpperCase()}</div>
+        <div class="stu-avatar" style="background:linear-gradient(135deg,#059669,#10b981);">${(s.name||s.full_name||'?').charAt(0).toUpperCase()}</div>
         <div class="stu-info">
-          <div class="stu-name">${esc(s.full_name||'')} <span class="stu-badge-ok">✅ Đã duyệt</span></div>
-          <div class="stu-user">@${esc(s.username||'')}</div>
+          <div class="stu-name">${esc(s.name||s.full_name||'')} <span class="stu-badge-ok">✅ Đã duyệt</span></div>
+          <div class="stu-user">@${esc(s.user||s.username||'')}</div>
         </div>
         <div class="stu-actions">
           <button class="stu-btn stu-btn-del" onclick="deleteStu('${s.id}')">🗑️ Xóa</button>
