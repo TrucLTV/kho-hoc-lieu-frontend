@@ -1138,18 +1138,51 @@ function switchFTab(t){
   document.getElementById('panel-url').style.display=t==='url'?'block':'none';
 }
 
-/* ── NORMAL DOC UPLOAD ── */
-function handleFiles(files){
-  Array.from(files).forEach(f=>{
-    const type=getFileType(f.name,f.type);
-    const reader=new FileReader();
-    reader.onload=e=>{
-      pendingFiles.push({id:'f'+Date.now()+Math.random().toString(36).slice(2,4),name:f.name,size:f.size,type,dataUrl:e.target.result,isUrl:false});
-      renderPendingFiles();
-      toast('📂 Đã tải: '+f.name.slice(0,30));
-    };
-    reader.readAsDataURL(f);
+/* ── UPLOAD FILE LÊN SUPABASE STORAGE ── */
+async function uploadToStorage(file, folder){
+  // Gọi backend để lấy signed upload URL
+  const ext   = file.name.split('.').pop();
+  const fname = Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + ext;
+  const path  = folder + '/' + fname;
+
+  // Upload qua backend (backend dùng service key để upload)
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('path', path);
+
+  const token = getToken();
+  const res = await fetch(API_URL + '/api/upload', {
+    method: 'POST',
+    headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+    body: formData
   });
+  const json = await res.json();
+  if(!res.ok) throw new Error(json.error || 'Upload thất bại');
+  return json.url; // public URL của file trên Supabase Storage
+}
+
+/* ── NORMAL DOC UPLOAD → Supabase Storage ── */
+async function handleFiles(files){
+  const arr = Array.from(files);
+  for(const f of arr){
+    const type = getFileType(f.name, f.type);
+    const fid  = 'f'+Date.now()+Math.random().toString(36).slice(2,4);
+    // Thêm placeholder "đang upload"
+    pendingFiles.push({id:fid, name:f.name, size:f.size, type, dataUrl:'', isUrl:false, uploading:true});
+    renderPendingFiles();
+    toast('⏳ Đang upload: '+f.name.slice(0,30));
+    try {
+      const url = await uploadToStorage(f, 'docs');
+      const idx = pendingFiles.findIndex(x=>x.id===fid);
+      if(idx>=0){ pendingFiles[idx].dataUrl=url; pendingFiles[idx].uploading=false; }
+      renderPendingFiles();
+      toast('📂 Upload xong: '+f.name.slice(0,30));
+    } catch(e) {
+      pendingFiles = pendingFiles.filter(x=>x.id!==fid);
+      renderPendingFiles();
+      toast('❌ Lỗi upload '+f.name.slice(0,20)+': '+(e.message||e),'err');
+    }
+  }
   document.getElementById('fileInput').value='';
 }
 function handleDrop(e){
@@ -1178,23 +1211,36 @@ function renderPendingFiles(){
     const size=f.size?(f.size/1024/1024).toFixed(2)+' MB':'URL';
     const div=document.createElement('div');
     div.className='uf-item';
-    div.innerHTML=`<span class="uf-ico">${ft.ico}</span><span class="uf-name">${esc(f.name)}</span><span class="uf-size">${ft.label} · ${size}</span><button class="uf-rm" onclick="removePending('${f.id}')">✕</button>`;
+    if(f.uploading){
+      div.innerHTML=`<span class="uf-ico">⏳</span><span class="uf-name">${esc(f.name)}</span><span class="uf-size" style="color:#f59e0b">Đang upload...</span>`;
+    } else {
+      div.innerHTML=`<span class="uf-ico">${ft.ico}</span><span class="uf-name">${esc(f.name)}</span><span class="uf-size">${ft.label} · ${size}</span><button class="uf-rm" onclick="removePending('${f.id}')">✕</button>`;
+    }
     el.appendChild(div);
   });
 }
 
-/* ── INTERACTIVE VIDEO UPLOAD ── */
-function handleIVFiles(files){
-  Array.from(files).forEach(f=>{
-    if(!f.name.match(/\.html?$/i)){toast('⚠️ Chỉ chấp nhận file .html!','err');return;}
-    const reader=new FileReader();
-    reader.onload=e=>{
-      pendingIVFiles.push({id:'iv'+Date.now()+Math.random().toString(36).slice(2,4),name:f.name,size:f.size,type:'iv',dataUrl:e.target.result,isUrl:false,isIV:true});
+/* ── INTERACTIVE VIDEO UPLOAD → Supabase Storage ── */
+async function handleIVFiles(files){
+  const arr = Array.from(files);
+  for(const f of arr){
+    if(!f.name.match(/\.html?$/i)){toast('⚠️ Chỉ chấp nhận file .html!','err');continue;}
+    const fid = 'iv'+Date.now()+Math.random().toString(36).slice(2,4);
+    pendingIVFiles.push({id:fid,name:f.name,size:f.size,type:'iv',dataUrl:'',isUrl:false,isIV:true,uploading:true});
+    renderIVList();
+    toast('⏳ Đang upload video: '+f.name.slice(0,28));
+    try {
+      const url = await uploadToStorage(f, 'iv');
+      const idx = pendingIVFiles.findIndex(x=>x.id===fid);
+      if(idx>=0){ pendingIVFiles[idx].dataUrl=url; pendingIVFiles[idx].uploading=false; }
       renderIVList();
-      toast('🎬 Đã tải video tương tác: '+f.name.slice(0,28));
-    };
-    reader.readAsDataURL(f);
-  });
+      toast('🎬 Upload xong video: '+f.name.slice(0,28));
+    } catch(e) {
+      pendingIVFiles = pendingIVFiles.filter(x=>x.id!==fid);
+      renderIVList();
+      toast('❌ Lỗi upload '+f.name.slice(0,20)+': '+(e.message||e),'err');
+    }
+  }
   document.getElementById('ivFileInput').value='';
 }
 function handleIVDrop(e){
