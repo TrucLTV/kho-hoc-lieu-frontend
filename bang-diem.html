@@ -509,10 +509,9 @@ function clearAllScores() {
 ;
 
 /* ── Auto refresh mỗi 3 giây (backup cho same-tab) ── */
-let _lastCount = -1;
+let _lastCount = 0;
 /* ── INIT: Load từ API ── */
 loadAndRender().then(() => initRealtime());
-let _lastCount = 0;
 </script>
 </body>
 </html>
