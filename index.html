@@ -1362,32 +1362,35 @@ function _loadFileIntoViewer(file) {
     const title = document.getElementById('vwTitle').textContent;
 
     if (raw.startsWith('data:')) {
-      // Dùng srcdoc: decode base64 → inject HTML qua TextDecoder (đúng UTF-8)
-      // srcdoc kế thừa origin của parent → postMessage hoạt động hoàn hảo
+      // Base64 cũ: decode → srcdoc (postMessage hoạt động vì cùng origin)
       try {
         const b64 = raw.split(',')[1];
-        // TextDecoder xử lý đúng UTF-8 (kể cả tiếng Việt)
         const binStr = atob(b64);
-        const bytes  = new Uint8Array(binStr.length);
+        const bytes = new Uint8Array(binStr.length);
         for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
-        const htmlText = new TextDecoder('utf-8').decode(bytes);
-        fr.srcdoc = htmlText;
+        fr.srcdoc = new TextDecoder('utf-8').decode(bytes);
       } catch(e) {
-        console.error('[KHL] srcdoc decode failed:', e);
-        // Fallback an toàn: vẫn srcdoc nhưng dùng cách đơn giản hơn
-        try {
-          const b64 = raw.split(',')[1];
-          fr.srcdoc = atob(b64);
-        } catch(e2) {
-          fr.srcdoc = '<p style="color:red;padding:20px">Không thể tải file. Vui lòng thử lại.</p>';
-        }
+        try { fr.srcdoc = atob(raw.split(',')[1]); }
+        catch(e2) { fr.srcdoc = '<p style="color:red;padding:20px">Không thể tải file.</p>'; }
       }
+      body.appendChild(fr);
+      _injectStudentInfo(fr, title);
+    } else if (raw.startsWith('http')) {
+      // URL từ Supabase Storage: fetch về → srcdoc để postMessage hoạt động
+      fr.srcdoc = '<p style="color:#aaa;text-align:center;padding:40px;font-size:1rem">⏳ Đang tải bài học...</p>';
+      body.appendChild(fr);
+      fetch(raw)
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(html => { fr.srcdoc = html; _injectStudentInfo(fr, title); })
+        .catch(err => {
+          console.error('[KHL] Fetch IV failed:', err);
+          fr.srcdoc = '<p style="color:red;text-align:center;padding:40px">❌ Không thể tải bài học. Vui lòng thử lại.</p>';
+        });
     } else {
       fr.src = raw;
+      body.appendChild(fr);
+      _injectStudentInfo(fr, title);
     }
-
-    body.appendChild(fr);
-    _injectStudentInfo(fr, title);
 
   } else if (file.type === 'pdf') {
     const fr = document.createElement('iframe');
