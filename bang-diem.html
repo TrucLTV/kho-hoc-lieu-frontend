@@ -274,13 +274,29 @@ if (!localStorage.getItem('khl_token')) {
 
 let _scoresCache = []; // cache từ API
 
+/* Chuyển đổi field từ API (snake_case) sang camelCase cho frontend */
+function mapScore(r) {
+  return {
+    id:          r.id,
+    studentName: r.student_name || r.studentName || 'Ẩn danh',
+    lessonTitle: r.lesson_title || r.lessonTitle || 'Bài học',
+    lessonId:    r.lesson_id    || r.lessonId    || '',
+    score:       r.score        || 0,
+    correct:     r.correct      || 0,
+    total:       r.total        || 5,
+    pct:         r.pct          || 0,
+    retryCount:  r.retry_count  || r.retryCount  || 1,
+    timestamp:   r.submitted_at ? new Date(r.submitted_at).getTime() : (r.timestamp || 0),
+  };
+}
+
 async function loadAndRender() {
   try {
-    _scoresCache = await apiFetch('/api/scores');
+    const raw = await apiFetch('/api/scores');
+    _scoresCache = (raw || []).map(mapScore);
     renderAll();
   } catch(e) {
     console.warn('Lỗi tải điểm:', e.error || e.message);
-    // fallback: dùng localStorage nếu có
     _scoresCache = [];
     renderAll();
   }
@@ -379,9 +395,16 @@ function renderTableAll() {
     const dt = new Date(r.timestamp);
     const dtStr = dt.toLocaleDateString('vi-VN') + ' ' + dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
     const pct = r.pct || (r.total ? Math.round(r.correct/r.total*100) : 0);
+    const nameInitial = (r.studentName||'?').charAt(0).toUpperCase();
+    const avatarColor = ['#2c7be5','#059669','#d97706','#7c3aed','#db2777'][r.studentName.length % 5];
     return `<tr>
       <td style="color:var(--text-muted);font-weight:700;font-size:.75rem;">${i+1}</td>
-      <td><strong>👤 ${esc(r.studentName)}</strong></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor};color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${nameInitial}</div>
+          <strong>${esc(r.studentName)}</strong>
+        </div>
+      </td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.lessonTitle)}">📖 ${esc(r.lessonTitle)}</td>
       <td><span class="pill pill-purple">⭐ ${r.score}</span></td>
       <td style="font-weight:700;">${r.correct}/${r.total} <span style="color:var(--text-muted);font-size:.72rem;">(${pct}%)</span></td>
@@ -408,8 +431,15 @@ function renderTableStu() {
   if (!list.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty-box"><div class="empty-ico">👥</div><p>Chưa có dữ liệu học sinh.</p></div></td></tr>`; return; }
   tbody.innerHTML = list.map(s => {
     const avg = Math.round(s.total / s.count);
+    const nameInitial = (s.name||'?').charAt(0).toUpperCase();
+    const avatarColor = ['#2c7be5','#059669','#d97706','#7c3aed','#db2777'][s.name.length % 5];
     return `<tr>
-      <td><strong>👤 ${esc(s.name)}</strong></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:${avatarColor};color:white;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${nameInitial}</div>
+          <strong>${esc(s.name)}</strong>
+        </div>
+      </td>
       <td><span class="pill pill-gray">${s.count} lượt</span></td>
       <td><span class="pill pill-purple">⭐ ${avg}</span></td>
       <td><span class="pill pill-gold">🏆 ${s.max}</span></td>
