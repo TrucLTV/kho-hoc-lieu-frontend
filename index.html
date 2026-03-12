@@ -972,7 +972,7 @@ function render(){
         const dot=hasContent
           ?'<span style="font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;border-radius:6px;padding:2px 8px;">✓ Có nội dung</span>'+(hasIV?'<span class="iv-badge">🎬 Video TT</span>':'')
           :'<span style="font-size:.7rem;color:var(--text-muted);background:var(--blue-pale);border-radius:6px;padding:2px 8px;">Chưa có nội dung</span>';
-        const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">📎 Nội dung</button>`:'';
+        const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
         const delBtn=isAdmin()?`<button class="ib del" onclick="event.stopPropagation();delItem('${s.id}','${it.id}')" title="Xóa">🗑️</button>`:'';
         iHTML+=`<div class="lesson-row" onclick="openLessonView('${s.id}','${it.id}')">
           <div class="lr-num">${idx+1}</div>
@@ -1322,9 +1322,10 @@ function _injectStudentInfo(fr, lessonTitle) {
       fr.contentWindow.postMessage({
         type: 'KHL_SET_STUDENT',
         studentName: _currentStudentName,
-        lessonTitle: lessonTitle
+        lessonTitle: lessonTitle,
+        lessonId: _currentLessonId
       }, '*');
-      console.log('[KHL] Sent KHL_SET_STUDENT to iframe:', _currentStudentName, lessonTitle);
+      console.log('[KHL] Sent KHL_SET_STUDENT to iframe:', _currentStudentName, lessonTitle, _currentLessonId);
     } catch(err) {
       console.warn('[KHL] postMessage to iframe failed:', err);
     }
@@ -1418,8 +1419,8 @@ function _loadFileIntoViewer(file) {
 }
 
 /* ── STUDENT NAME PROMPT ── */
-function _askStudentName(file, title, allFiles) {
-  _pendingViewerFile = { file, title, allFiles };
+function _askStudentName(file, title, allFiles, lessonId) {
+  _pendingViewerFile = { file, title, allFiles, lessonId };
   // Pre-fill nếu đã có tên
   const saved = localStorage.getItem('khl_student_name') || '';
   document.getElementById('snInput').value = _currentStudentName !== 'Học sinh' ? _currentStudentName : saved;
@@ -1442,8 +1443,11 @@ function skipStudentName() {
   if (_pendingViewerFile) _openViewerNow(_pendingViewerFile);
 }
 
-function _openViewerNow({ file, title, allFiles }) {
+let _currentLessonId = null; // lessonId đang xem, dùng khi gửi điểm
+
+function _openViewerNow({ file, title, allFiles, lessonId }) {
   _pendingViewerFile = null;
+  _currentLessonId = lessonId || null;
   _viewerFiles = allFiles || [file];
   _renderViewerTabs(_viewerFiles, file.id);
   document.getElementById('vwTitle').textContent = title;
@@ -1466,7 +1470,8 @@ function openViewer(fid, e) {
   if (!file) return;
   const allFiles = (parentItem.files || []).concat(parentItem.ivFiles || []);
   const title = parentItem.title || file.name;
-  _openViewerNow({ file, title, allFiles });
+  const lessonId = parentItem.id || null;
+  _openViewerNow({ file, title, allFiles, lessonId });
 }
 
 /* ── OPEN IV VIEWER (video tương tác) ── */
@@ -1480,17 +1485,18 @@ function openIVViewer(fid, e) {
   if (!file) return;
   const allFiles = (parentItem.files || []).concat(parentItem.ivFiles || []);
   const title = parentItem.title || file.name;
+  const lessonId = parentItem.id || null;
   // Nếu là học sinh → hỏi tên trước
   const savedName = localStorage.getItem('khl_student_name') || '';
   if (!isAdmin() && (!_currentStudentName || _currentStudentName === 'Học sinh')) {
     if (savedName) {
       _currentStudentName = savedName;
-      _openViewerNow({ file, title, allFiles });
+      _openViewerNow({ file, title, allFiles, lessonId });
     } else {
-      _askStudentName(file, title, allFiles);
+      _askStudentName(file, title, allFiles, lessonId);
     }
   } else {
-    _openViewerNow({ file, title, allFiles });
+    _openViewerNow({ file, title, allFiles, lessonId });
   }
 }
 
@@ -1543,7 +1549,7 @@ function openAddItem(sid){
 function openLessonView(sid,iid){
   const s=data.find(x=>x.id===sid);
   const it=s&&s.items.find(i=>i.id===iid); if(!it) return;
-  if(isAdmin()) openEditItem(sid,iid);
+  if(isAdmin()) openLessonViewer(sid,iid); // Admin cũng xem được như học sinh
   else openLessonViewer(sid,iid);
 }
 function openLessonViewer(sid,iid){
@@ -1864,25 +1870,27 @@ function dbRecordScore(payload) {
 window.addEventListener('message', async function(e) {
   if (!e.data || e.data.type !== 'KHL_SCORE') return;
   const payload = e.data.payload || {};
-  payload.studentName = _currentStudentName || payload.studentName || 'Ẩn danh';
+  payload.studentName  = _currentStudentName || payload.studentName || 'Ẩn danh';
+  payload.lessonId     = payload.lessonId || _currentLessonId || null;
+  payload.lessonTitle  = payload.lessonTitle || document.getElementById('vwTitle')?.textContent || 'Bài học';
 
   // Ghi lên server API
   try {
     await apiFetch('/api/scores', {
       method: 'POST',
       body: JSON.stringify({
-        lesson_id:    payload.lessonId || null,
-        lesson_title: payload.lessonTitle || document.getElementById('vwTitle')?.textContent || 'Bài học',
+        lesson_id:    payload.lessonId,
+        lesson_title: payload.lessonTitle,
         score:   payload.score   || 0,
         correct: payload.correct || 0,
         total:   payload.total   || 5
       })
     });
+    toast('✅ Đã lưu điểm: ' + (payload.score || 0) + ' điểm!', 'ok');
   } catch(err) { console.warn('Lỗi gửi điểm lên API:', err); }
 
-  // Hiện overlay xác nhận
-  if (!isAdmin()) showScoreSaved(payload);
-  else toast('📊 ' + payload.studentName + ' — ' + (payload.score || 0) + ' điểm!', 'ok');
+  // Hiện overlay xác nhận (cả admin lẫn học sinh đều thấy)
+  showScoreSaved(payload);
   const dot = document.getElementById('dbDot');
   if (dot) dot.style.display = 'inline-block';
 });
