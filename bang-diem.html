@@ -219,8 +219,8 @@ tbody td{padding:11px 14px;font-size:.83rem;vertical-align:middle;}
    API CONFIG – Kết nối Backend + Supabase Realtime
 ══════════════════════════════════════════════════════════ */
 const API_URL      = 'https://kho-hoc-lieu-backend.onrender.com'; // ← đổi sau khi deploy
-const SUPABASE_URL = 'https://abcdefghij.supabase.co';   // ← điền sau: https://xxxx.supabase.co
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsZHhieGlzeHFnZmJodG9jcWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMzgwNzAsImV4cCI6MjA4ODgxNDA3MH0.DzMI_5h7Qi02wUYKZqE5eKzq2oRPXAYvfn9NVk84LO8';   // ← điền sau: anon/public key
+const SUPABASE_URL = 'https://kldxbxisxqgfbhtocqab.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsZHhieGlzeHFnZmJodG9jcWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMzgwNzAsImV4cCI6MjA4ODgxNDA3MH0.DzMI_5h7Qi02wUYKZqE5eKzq2oRPXAYvfn9NVk84LO8';
 
 function getToken() { return localStorage.getItem('khl_token'); }
 
@@ -293,7 +293,9 @@ function mapScore(r) {
 async function loadAndRender() {
   try {
     const raw = await apiFetch('/api/scores');
+    console.log('[DEBUG] Raw API scores:', raw && raw[0]); // log bản ghi đầu tiên
     _scoresCache = (raw || []).map(mapScore);
+    console.log('[DEBUG] Mapped scores:', _scoresCache && _scoresCache[0]);
     renderAll();
   } catch(e) {
     console.warn('Lỗi tải điểm:', e.error || e.message);

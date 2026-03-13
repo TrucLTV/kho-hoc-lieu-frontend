@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quản lý Bài Tập – Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --blue-deep:#071e3d;--blue-navy:#0a2540;--blue-mid:#1a4a8a;
+  --blue-bright:#2c7be5;--blue-light:#5b9cf6;--blue-pale:#dbeafe;
+  --blue-frost:#eff6ff;--white:#fff;--gray-soft:#f0f5ff;
+  --text-dark:#071e3d;--text-mid:#2d5282;--text-muted:#718096;
+  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;
+  --shadow-card:0 4px 24px rgba(44,123,229,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--blue-frost);color:var(--text-dark);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 10% 20%,rgba(44,123,229,.10) 0%,transparent 60%);pointer-events:none;z-index:0;}
+header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%,var(--blue-bright) 100%);position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(10,37,64,.25);}
+.hdr{max-width:1200px;margin:auto;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-ico{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo h1{font-family:'Playfair Display',serif;font-size:1.2rem;color:white;}
+.admin-badge{background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:4px 12px;border-radius:20px;font-size:.76rem;font-weight:700;}
+.btn-back{padding:7px 15px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.22);border-radius:18px;color:white;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;align-items:center;gap:6px;}
+.btn-back:hover{background:rgba(255,255,255,.22);}
+
+main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-index:1;}
+
+/* ── Cards ── */
+.panel{background:white;border-radius:16px;box-shadow:var(--shadow-card);border:1.5px solid var(--blue-pale);overflow:hidden;margin-bottom:22px;}
+.panel-hdr{padding:16px 22px 13px;background:linear-gradient(135deg,var(--blue-navy),var(--blue-mid));color:white;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.panel-hdr h2{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+.panel-body{padding:20px 22px;}
+
+/* ── Buttons ── */
+.btn{padding:9px 18px;border-radius:10px;font-family:inherit;font-size:.84rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
+.btn-pri{background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;box-shadow:0 4px 14px rgba(44,123,229,.3);}
+.btn-pri:hover{transform:translateY(-1px);}
+.btn-sec{background:white;color:var(--blue-mid);border:2px solid var(--blue-pale);}
+.btn-sec:hover{border-color:var(--blue-light);}
+.btn-warn{background:white;color:#d97706;border:2px solid #fcd34d;}
+.btn-warn:hover{background:#fffbeb;}
+.btn-danger{background:white;color:var(--danger);border:2px solid #fecaca;}
+.btn-danger:hover{background:#fef2f2;}
+.btn-sm{padding:6px 13px;font-size:.78rem;}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:white;}
+
+/* ── Form ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:700px){.form-row{grid-template-columns:1fr;}}
+.form-group{margin-bottom:14px;}
+.form-lbl{display:block;font-size:.79rem;font-weight:700;color:var(--text-mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.form-inp,.form-sel,.form-ta{width:100%;padding:10px 13px;border:2px solid var(--blue-pale);border-radius:10px;font-family:inherit;font-size:.88rem;color:var(--text-dark);background:var(--blue-frost);outline:none;transition:all .2s;}
+.form-inp:focus,.form-sel:focus,.form-ta:focus{border-color:var(--blue-bright);background:white;box-shadow:0 0 0 3px rgba(44,123,229,.10);}
+.form-ta{resize:vertical;min-height:90px;font-family:'Courier New',monospace;}
+.form-ta-desc{min-height:120px;font-family:inherit;}
+.form-hint{font-size:.74rem;color:var(--text-muted);margin-top:4px;}
+
+/* ── Problem list ── */
+.prob-list{display:flex;flex-direction:column;gap:10px;}
+.prob-item{background:white;border:1.5px solid var(--blue-pale);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;transition:all .2s;}
+.prob-item:hover{border-color:var(--blue-light);box-shadow:0 2px 10px rgba(44,123,229,.10);}
+.prob-item h3{font-size:.95rem;font-weight:700;flex:1;}
+.prob-item .meta{font-size:.75rem;color:var(--text-muted);margin-top:2px;}
+.prob-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── Testcase table ── */
+.tc-table{width:100%;border-collapse:collapse;font-size:.84rem;}
+.tc-table th{background:var(--blue-frost);padding:9px 13px;text-align:left;font-size:.77rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--blue-pale);}
+.tc-table td{padding:9px 13px;border-bottom:1px solid var(--blue-pale);vertical-align:top;}
+.tc-table tr:last-child td{border-bottom:none;}
+.tc-table tr:hover td{background:var(--blue-frost);}
+.tc-code{font-family:'Courier New',monospace;font-size:.82rem;white-space:pre;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+.badge-sample{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:6px;font-size:.71rem;font-weight:700;}
+.badge-hidden{background:var(--gray-soft);color:var(--text-muted);padding:2px 8px;border-radius:6px;font-size:.71rem;font-weight:700;}
+
+/* ── Submissions viewer ── */
+.sub-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.sub-table th{background:var(--blue-frost);padding:9px 13px;text-align:left;font-size:.76rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;border-bottom:2px solid var(--blue-pale);}
+.sub-table td{padding:9px 13px;border-bottom:1px solid var(--blue-pale);}
+.sub-table tr:last-child td{border-bottom:none;}
+.b-ac{background:#d1fae5;color:#065f46;} .b-wa{background:#fee2e2;color:#991b1b;}
+.b-pa{background:#fef3c7;color:#92400e;} .b-err{background:#fef2f2;color:#991b1b;}
+.status-badge{padding:3px 9px;border-radius:7px;font-size:.72rem;font-weight:700;}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+.tab{padding:8px 18px;border-radius:18px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid var(--blue-pale);background:white;color:var(--text-mid);transition:all .2s;}
+.tab.active{background:var(--blue-bright);color:white;border-color:var(--blue-bright);}
+
+/* ── Bulk upload ── */
+.upload-box{border:2px dashed var(--blue-light);border-radius:12px;padding:24px;text-align:center;background:var(--blue-frost);cursor:pointer;transition:all .2s;}
+.upload-box:hover{border-color:var(--blue-bright);background:#eff6ff;}
+.upload-box p{font-size:.85rem;color:var(--text-muted);margin-top:6px;}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(10,37,64,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal{background:white;border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.3);}
+.modal-hdr{padding:20px 26px 16px;background:linear-gradient(135deg,var(--blue-navy),var(--blue-mid));color:white;display:flex;align-items:center;justify-content:space-between;}
+.modal-hdr h3{font-size:1.05rem;font-weight:700;}
+.modal-close{background:rgba(255,255,255,.15);border:none;color:white;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:22px 26px 26px;}
+.modal-footer{padding:14px 26px;border-top:1.5px solid var(--blue-pale);display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:28px;right:28px;padding:13px 20px;border-radius:12px;font-size:.86rem;font-weight:600;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.15);animation:slideUp .3s ease;display:none;}
+.toast.show{display:block;}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.toast-ok{background:#065f46;color:white;} .toast-err{background:#991b1b;color:white;}
+
+.empty{text-align:center;padding:32px;color:var(--text-muted);}
+.empty-ico{font-size:36px;margin-bottom:8px;}
+
+/* ── Item selector ── */
+.item-sel-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
+.item-sel-item{padding:11px 15px;border:1.5px solid var(--blue-pale);border-radius:10px;cursor:pointer;transition:all .2s;}
+.item-sel-item:hover,.item-sel-item.sel{border-color:var(--blue-bright);background:var(--blue-frost);}
+.item-sel-item h4{font-size:.88rem;font-weight:700;}
+.item-sel-item .meta{font-size:.73rem;color:var(--text-muted);margin-top:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-ico">📚</div>
+      <h1>Admin – Quản lý Bài Tập</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="admin-badge">👑 Admin</span>
+      <a href="index.html" class="btn-back">← Về trang chính</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" onclick="setTab(this,'tabProblems')">💻 Bài tập</div>
+    <div class="tab" onclick="setTab(this,'tabSubmissions')">📋 Bài nộp</div>
+  </div>
+
+  <!-- TAB: Bài tập -->
+  <div id="tabProblems">
+
+    <!-- Chọn item -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>📁 Chọn bài học / mục chứa bài tập</h2>
+        <button class="btn btn-pri btn-sm" onclick="showCreateProbModal()">➕ Tạo bài tập mới</button>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label class="form-lbl">Lọc theo mục (item)</label>
+          <select id="itemFilter" class="form-sel" onchange="loadProblems()">
+            <option value="">— Tất cả bài tập —</option>
+          </select>
+        </div>
+        <div id="problemList" class="prob-list">
+          <div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: Bài nộp -->
+  <div id="tabSubmissions" style="display:none">
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>📋 Tất cả bài nộp</h2>
+        <button class="btn btn-sec btn-sm" onclick="loadSubmissions()">🔄 Refresh</button>
+      </div>
+      <div class="panel-body">
+        <div class="form-row" style="margin-bottom:16px">
+          <select id="subFilterProb" class="form-sel" onchange="loadSubmissions()">
+            <option value="">— Tất cả bài tập —</option>
+          </select>
+          <select id="subFilterStatus" class="form-sel" onchange="loadSubmissions()">
+            <option value="">— Tất cả trạng thái —</option>
+            <option value="accepted">✅ Accepted</option>
+            <option value="wrong_answer">❌ Wrong Answer</option>
+            <option value="partial">⚠️ Partial</option>
+            <option value="error">🔴 Error</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="sub-table">
+            <thead>
+              <tr><th>Học sinh</th><th>Bài tập</th><th>Ngôn ngữ</th><th>Trạng thái</th><th>Điểm</th><th>Tests</th><th>Thời gian</th><th></th></tr>
+            </thead>
+            <tbody id="subTableBody">
+              <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ MODAL: Tạo/Sửa bài tập ═══ -->
+<div id="modalProblem" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modalProblem')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modalProbTitle">➕ Tạo bài tập mới</h3>
+      <button class="modal-close" onclick="closeModal('modalProblem')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-lbl">Gắn vào bài học (Item) *</label>
+        <select id="probItemId" class="form-sel">
+          <option value="">— Chọn mục —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Tiêu đề bài tập *</label>
+        <input id="probTitle" class="form-inp" placeholder="VD: Tổng hai số nguyên"/>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Đề bài (mô tả) *</label>
+        <textarea id="probDesc" class="form-ta form-ta-desc" placeholder="Nhập mô tả bài toán..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Định dạng Input</label>
+          <textarea id="probInputFmt" class="form-ta" style="min-height:70px" placeholder="Mô tả định dạng input..."></textarea>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Định dạng Output</label>
+          <textarea id="probOutputFmt" class="form-ta" style="min-height:70px" placeholder="Mô tả định dạng output..."></textarea>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Ràng buộc</label>
+        <input id="probConstraints" class="form-inp" placeholder="VD: 1 ≤ n ≤ 10^5, 1 ≤ a[i] ≤ 10^9"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Ví dụ Input</label>
+          <textarea id="probExIn" class="form-ta" style="min-height:70px" placeholder="3&#10;1 2 3"></textarea>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Ví dụ Output</label>
+          <textarea id="probExOut" class="form-ta" style="min-height:70px" placeholder="6"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Time limit (ms)</label>
+          <input id="probTimeLimit" class="form-inp" type="number" value="2000" min="100" max="30000"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-lbl">Memory limit (MB)</label>
+          <input id="probMemLimit" class="form-inp" type="number" value="256" min="32" max="1024"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Ngôn ngữ được phép</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem"><input type="checkbox" name="lang" value="python" checked> Python</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem"><input type="checkbox" name="lang" value="javascript" checked> JavaScript</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem"><input type="checkbox" name="lang" value="c"> C</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.88rem"><input type="checkbox" name="lang" value="cpp"> C++</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeModal('modalProblem')">Hủy</button>
+      <button class="btn btn-pri" onclick="saveProblem()">💾 Lưu bài tập</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Quản lý Testcase ═══ -->
+<div id="modalTestcase" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modalTestcase')">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-hdr">
+      <h3 id="tcModalTitle">🧪 Testcase</h3>
+      <button class="modal-close" onclick="closeModal('modalTestcase')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Thêm testcase đơn lẻ -->
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-hdr" style="padding:12px 18px">
+          <h2 style="font-size:.88rem">➕ Thêm testcase</h2>
+        </div>
+        <div class="panel-body" style="padding:16px 18px">
+          <div class="form-row">
+            <div>
+              <label class="form-lbl">Input</label>
+              <textarea id="tcInput" class="form-ta" style="min-height:80px" placeholder="Nhập input..."></textarea>
+            </div>
+            <div>
+              <label class="form-lbl">Expected Output *</label>
+              <textarea id="tcExpected" class="form-ta" style="min-height:80px" placeholder="Nhập output mong đợi..."></textarea>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.86rem">
+              <input type="checkbox" id="tcIsSample"> Là testcase mẫu (hiển thị cho học sinh)
+            </label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="form-lbl" style="margin:0">Trọng số:</span>
+              <input id="tcWeight" class="form-inp" type="number" value="1" min="1" style="width:70px"/>
+            </div>
+            <button class="btn btn-pri btn-sm" onclick="addTestcase()" style="margin-left:auto">➕ Thêm</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bulk upload -->
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-hdr" style="padding:12px 18px">
+          <h2 style="font-size:.88rem">📤 Upload hàng loạt (JSON)</h2>
+        </div>
+        <div class="panel-body" style="padding:16px 18px">
+          <div class="upload-box" onclick="document.getElementById('tcFile').click()">
+            📁 <strong>Nhấn để chọn file JSON</strong> hoặc kéo thả vào đây
+            <p>Định dạng: <code>[{"input":"...","expected":"...","is_sample":true},...]</code></p>
+          </div>
+          <input id="tcFile" type="file" accept=".json,.txt" style="display:none" onchange="handleTcUpload(event)"/>
+          <div class="form-hint" style="margin-top:8px">⚠️ Upload sẽ <strong>thay thế toàn bộ</strong> testcase hiện tại</div>
+        </div>
+      </div>
+
+      <!-- Danh sách testcase hiện có -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <strong style="font-size:.9rem">Danh sách testcase (<span id="tcCount">0</span>)</strong>
+          <button class="btn btn-danger btn-sm" onclick="deleteAllTestcases()">🗑 Xóa tất cả</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tc-table">
+            <thead><tr><th>#</th><th>Input</th><th>Expected Output</th><th>Loại</th><th>Weight</th><th></th></tr></thead>
+            <tbody id="tcTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Chưa có testcase</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeModal('modalTestcase')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Xem submission chi tiết ═══ -->
+<div id="modalSubDetail" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modalSubDetail')">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-hdr">
+      <h3>📄 Chi tiết bài nộp</h3>
+      <button class="modal-close" onclick="closeModal('modalSubDetail')">✕</button>
+    </div>
+    <div class="modal-body" id="subDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeModal('modalSubDetail')">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+const API = (localStorage.getItem('khl_api') || 'http://localhost:3001') + '/api';
+const token = () => localStorage.getItem('khl_token');
+
+let allItems    = [];
+let allProblems = [];
+let editingProbId = null;
+let currentTcProbId = null;
+let currentTestcases = [];
+
+// ── Init ──
+(async () => {
+  if (!token()) { location.href = 'index.html'; return; }
+  const user = parseJwt(token());
+  if (user?.role !== 'admin') { location.href = 'index.html'; return; }
+  await loadContent();
+  await loadProblems();
+})();
+
+// ── Load content tree để lấy items ──
+async function loadContent() {
+  try {
+    const res  = await apiFetch('/content');
+    const data = await res.json();
+    allItems = [];
+    (data || []).forEach(sec => {
+      (sec.items || []).forEach(item => {
+        allItems.push({ id: item.id, title: item.title, section: sec.name });
+      });
+    });
+
+    // Populate item dropdowns
+    const opts = allItems.map(i => `<option value="${i.id}">${esc(i.section)} › ${esc(i.title)}</option>`).join('');
+    document.getElementById('itemFilter').innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
+    document.getElementById('probItemId').innerHTML = '<option value="">— Chọn mục —</option>' + opts;
+  } catch(e) {
+    console.error('loadContent:', e);
+  }
+}
+
+// ── Load problems ──
+async function loadProblems() {
+  const itemId = document.getElementById('itemFilter').value;
+  const url    = itemId ? `/problems?item_id=${itemId}` : `/problems?item_id=all`;
+
+  // Nếu không có item_id, tải từng item (workaround – có thể cải thiện sau)
+  let problems = [];
+  if (!itemId) {
+    for (const item of allItems) {
+      try {
+        const res = await apiFetch(`/problems?item_id=${item.id}`);
+        const data = await res.json();
+        problems.push(...(data || []).map(p => ({ ...p, _itemTitle: item.title, _section: item.section })));
+      } catch(_) {}
+    }
+  } else {
+    try {
+      const res  = await apiFetch(`/problems?item_id=${itemId}`);
+      problems   = (await res.json()).map(p => {
+        const item = allItems.find(i => i.id === itemId);
+        return { ...p, _itemTitle: item?.title || '', _section: item?.section || '' };
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  allProblems = problems;
+  renderProblemList(problems);
+
+  // Update submission filter
+  const probOpts = problems.map(p => `<option value="${p.id}">${esc(p.title)}</option>`).join('');
+  document.getElementById('subFilterProb').innerHTML = '<option value="">— Tất cả bài tập —</option>' + probOpts;
+}
+
+function renderProblemList(problems) {
+  const el = document.getElementById('problemList');
+  if (!problems.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ico">📭</div><p>Chưa có bài tập nào. Nhấn "Tạo bài tập mới" để bắt đầu.</p></div>';
+    return;
+  }
+  el.innerHTML = problems.map(p => `
+    <div class="prob-item">
+      <div style="flex:1">
+        <h3>💻 ${esc(p.title)}</h3>
+        <div class="meta">${esc(p._section)} › ${esc(p._itemTitle)} · ⏱${p.time_limit_ms}ms · ${(p.allowed_languages||[]).join(', ')}</div>
+      </div>
+      <div class="prob-actions">
+        <a href="submit.html?item_id=${esc(p.item_id)}&title=${encodeURIComponent(p._itemTitle)}" target="_blank" class="btn btn-sec btn-sm">👁 Xem</a>
+        <button class="btn btn-warn btn-sm" onclick="openTestcaseModal('${p.id}','${esc(p.title)}')">🧪 Testcase</button>
+        <button class="btn btn-sec btn-sm" onclick="editProblem('${p.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}','${esc(p.title)}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════
+// PROBLEM CRUD
+// ════════════════════════════════════════════════════
+function showCreateProbModal() {
+  editingProbId = null;
+  document.getElementById('modalProbTitle').textContent = '➕ Tạo bài tập mới';
+  clearProbForm();
+  openModal('modalProblem');
+}
+
+async function editProblem(id) {
+  try {
+    const res  = await apiFetch(`/problems/${id}`);
+    const prob = await res.json();
+    editingProbId = id;
+    document.getElementById('modalProbTitle').textContent = '✏️ Sửa bài tập';
+    document.getElementById('probItemId').value     = prob.item_id || '';
+    document.getElementById('probTitle').value      = prob.title || '';
+    document.getElementById('probDesc').value       = prob.description || '';
+    document.getElementById('probInputFmt').value   = prob.input_format || '';
+    document.getElementById('probOutputFmt').value  = prob.output_format || '';
+    document.getElementById('probConstraints').value= prob.constraints || '';
+    document.getElementById('probExIn').value       = prob.example_input || '';
+    document.getElementById('probExOut').value      = prob.example_output || '';
+    document.getElementById('probTimeLimit').value  = prob.time_limit_ms || 2000;
+    document.getElementById('probMemLimit').value   = prob.memory_limit_mb || 256;
+    const langs = prob.allowed_languages || [];
+    document.querySelectorAll('input[name="lang"]').forEach(cb => { cb.checked = langs.includes(cb.value); });
+    openModal('modalProblem');
+  } catch(e) { showToast('Lỗi tải bài tập: ' + e.message, 'err'); }
+}
+
+async function saveProblem() {
+  const item_id = document.getElementById('probItemId').value;
+  const title   = document.getElementById('probTitle').value.trim();
+  const description = document.getElementById('probDesc').value.trim();
+  if (!item_id || !title || !description) {
+    showToast('Vui lòng điền đầy đủ: mục, tiêu đề, đề bài', 'err'); return;
+  }
+  const langs = [...document.querySelectorAll('input[name="lang"]:checked')].map(c => c.value);
+  if (!langs.length) { showToast('Chọn ít nhất 1 ngôn ngữ', 'err'); return; }
+
+  const body = {
+    item_id, title, description,
+    input_format:   document.getElementById('probInputFmt').value,
+    output_format:  document.getElementById('probOutputFmt').value,
+    constraints:    document.getElementById('probConstraints').value,
+    example_input:  document.getElementById('probExIn').value,
+    example_output: document.getElementById('probExOut').value,
+    time_limit_ms:  parseInt(document.getElementById('probTimeLimit').value) || 2000,
+    memory_limit_mb:parseInt(document.getElementById('probMemLimit').value) || 256,
+    allowed_languages: langs
+  };
+
+  try {
+    const url    = editingProbId ? `/problems/${editingProbId}` : '/problems';
+    const method = editingProbId ? 'PUT' : 'POST';
+    const res = await apiFetch(url, method, body);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast(editingProbId ? '✅ Đã cập nhật bài tập' : '✅ Đã tạo bài tập mới', 'ok');
+    closeModal('modalProblem');
+    await loadProblems();
+  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+}
+
+async function deleteProblem(id, title) {
+  if (!confirm(`Xóa bài tập "${title}"?\nTất cả testcase và bài nộp sẽ bị xóa!`)) return;
+  try {
+    const res = await apiFetch(`/problems/${id}`, 'DELETE');
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast('🗑 Đã xóa bài tập', 'ok');
+    await loadProblems();
+  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+}
+
+function clearProbForm() {
+  ['probItemId','probTitle','probDesc','probInputFmt','probOutputFmt','probConstraints','probExIn','probExOut'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = id === 'probItemId' ? '' : '';
+  });
+  document.getElementById('probTimeLimit').value = 2000;
+  document.getElementById('probMemLimit').value = 256;
+  document.querySelectorAll('input[name="lang"]').forEach(c => { c.checked = c.value === 'python' || c.value === 'javascript'; });
+}
+
+// ════════════════════════════════════════════════════
+// TESTCASE MANAGEMENT
+// ════════════════════════════════════════════════════
+async function openTestcaseModal(probId, probTitle) {
+  currentTcProbId = probId;
+  document.getElementById('tcModalTitle').textContent = `🧪 Testcase – ${probTitle}`;
+  await loadTestcases(probId);
+  openModal('modalTestcase');
+}
+
+async function loadTestcases(probId) {
+  try {
+    const res  = await apiFetch(`/problems/${probId}`);
+    const prob = await res.json();
+    currentTestcases = prob.testcases || [];
+    renderTestcases();
+  } catch(e) { showToast('Lỗi tải testcase', 'err'); }
+}
+
+function renderTestcases() {
+  document.getElementById('tcCount').textContent = currentTestcases.length;
+  const tbody = document.getElementById('tcTableBody');
+  if (!currentTestcases.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Chưa có testcase</td></tr>';
+    return;
+  }
+  tbody.innerHTML = currentTestcases.map((tc, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><div class="tc-code">${esc(tc.input).substring(0,80)}</div></td>
+      <td><div class="tc-code">${esc(tc.expected).substring(0,80)}</div></td>
+      <td>${tc.is_sample ? '<span class="badge-sample">Mẫu</span>' : '<span class="badge-hidden">Ẩn</span>'}</td>
+      <td>${tc.score_weight}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteTestcase('${tc.id}')">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+async function addTestcase() {
+  const input    = document.getElementById('tcInput').value;
+  const expected = document.getElementById('tcExpected').value.trim();
+  const isSample = document.getElementById('tcIsSample').checked;
+  const weight   = parseInt(document.getElementById('tcWeight').value) || 1;
+
+  if (!expected) { showToast('Expected output không được trống', 'err'); return; }
+
+  try {
+    const res = await apiFetch(`/problems/${currentTcProbId}/testcases`, 'POST', {
+      input, expected, is_sample: isSample, score_weight: weight,
+      position: currentTestcases.length
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast('✅ Đã thêm testcase', 'ok');
+    document.getElementById('tcInput').value = '';
+    document.getElementById('tcExpected').value = '';
+    document.getElementById('tcIsSample').checked = false;
+    await loadTestcases(currentTcProbId);
+  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+}
+
+async function deleteTestcase(id) {
+  if (!confirm('Xóa testcase này?')) return;
+  try {
+    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/${id}`, 'DELETE');
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast('🗑 Đã xóa testcase', 'ok');
+    await loadTestcases(currentTcProbId);
+  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+}
+
+async function deleteAllTestcases() {
+  if (!confirm(`Xóa TẤT CẢ ${currentTestcases.length} testcase?\nHành động này không thể hoàn tác!`)) return;
+  try {
+    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/bulk`, 'POST', { testcases: [] });
+    if (!res.ok && res.status !== 400) { const e = await res.json(); throw new Error(e.error); }
+    // Xóa từng cái
+    for (const tc of currentTestcases) {
+      await apiFetch(`/problems/${currentTcProbId}/testcases/${tc.id}`, 'DELETE');
+    }
+    showToast('🗑 Đã xóa tất cả testcase', 'ok');
+    await loadTestcases(currentTcProbId);
+  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── Upload JSON testcases ──
+async function handleTcUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { showToast('File JSON không hợp lệ', 'err'); return; }
+
+    if (!Array.isArray(data) || !data.length)
+      { showToast('Mảng testcase rỗng hoặc sai định dạng', 'err'); return; }
+
+    // Validate
+    const valid = data.every(tc => tc.expected !== undefined);
+    if (!valid) { showToast('Mỗi testcase cần có trường "expected"', 'err'); return; }
+
+    if (!confirm(`Upload ${data.length} testcase? Testcase cũ sẽ bị xóa hết!`)) return;
+
+    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/bulk`, 'POST', { testcases: data });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    showToast(`✅ Đã upload ${data.length} testcase`, 'ok');
+    await loadTestcases(currentTcProbId);
+    event.target.value = '';
+  } catch(e) { showToast('Lỗi upload: ' + e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════════
+// SUBMISSIONS
+// ════════════════════════════════════════════════════
+async function loadSubmissions() {
+  const probId  = document.getElementById('subFilterProb').value;
+  const status  = document.getElementById('subFilterStatus').value;
+  let url = '/submissions';
+  const qs = [];
+  if (probId)  qs.push(`problem_id=${probId}`);
+  if (qs.length) url += '?' + qs.join('&');
+
+  try {
+    const res  = await apiFetch(url);
+    let data   = await res.json();
+    if (status) data = data.filter(s => s.status === status);
+
+    const statusLabel = {
+      accepted:'✅ Accepted', wrong_answer:'❌ Wrong Answer', partial:'⚠️ Partial',
+      error:'🔴 Error', judging:'⏳ Judging', pending:'⏳ Pending'
+    };
+    const statusCls = {
+      accepted:'b-ac', wrong_answer:'b-wa', partial:'b-pa', error:'b-err',
+      judging:'b-pend', pending:'b-pend'
+    };
+
+    const probMap = {};
+    allProblems.forEach(p => { probMap[p.id] = p.title; });
+
+    const tbody = document.getElementById('subTableBody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Không có bài nộp nào</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(s => `
+      <tr>
+        <td>${esc(s.student_name || '—')}</td>
+        <td>${esc(probMap[s.problem_id] || '—')}</td>
+        <td><code>${s.language}</code></td>
+        <td><span class="status-badge ${statusCls[s.status] || 'b-pend'}">${statusLabel[s.status] || s.status}</span></td>
+        <td><strong>${s.score}/100</strong></td>
+        <td>${s.passed_tests}/${s.total_tests}</td>
+        <td style="font-size:.75rem;color:var(--text-muted)">${formatDate(s.submitted_at)}</td>
+        <td><button class="btn btn-sec btn-sm" onclick="viewSubmission('${s.id}')">📄 Xem</button></td>
+      </tr>
+    `).join('');
+  } catch(e) { showToast('Lỗi tải submissions: ' + e.message, 'err'); }
+}
+
+async function viewSubmission(id) {
+  try {
+    const res  = await apiFetch(`/submissions/${id}`);
+    const data = await res.json();
+    const body = document.getElementById('subDetailBody');
+    const statusLabel = { accepted:'✅ Accepted', wrong_answer:'❌ Wrong Answer', partial:'⚠️ Partial', error:'🔴 Error' };
+
+    body.innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <span class="status-badge" style="font-size:.85rem;padding:6px 14px;background:#dbeafe;color:#1e40af">${statusLabel[data.status]||data.status}</span>
+        <span style="font-size:.85rem;font-weight:700">${data.score}/100 điểm</span>
+        <span style="font-size:.85rem;color:var(--text-muted)">${data.passed_tests}/${data.total_tests} testcase · ${data.language} · ${formatDate(data.submitted_at)}</span>
+      </div>
+      ${data.error_msg ? `<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.82rem;color:#991b1b;margin-bottom:14px;white-space:pre-wrap">${esc(data.error_msg)}</div>` : ''}
+      <div style="margin-bottom:10px;font-weight:700;font-size:.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Source Code</div>
+      <pre style="background:#1e2a3a;color:#e2e8f0;padding:16px;border-radius:10px;font-size:.82rem;overflow-x:auto;max-height:300px;overflow-y:auto">${esc(data.source_code)}</pre>
+      ${(data.results||[]).length ? `
+        <div style="margin-top:16px;font-weight:700;font-size:.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Kết quả testcase</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${data.results.map((r,i) => `
+            <div style="padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:700;background:${r.passed?'#d1fae5':'#fee2e2'};color:${r.passed?'#065f46':'#991b1b'}">
+              #${i+1} ${r.passed?'✓':'✗'} ${r.exec_time_ms}ms
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+    openModal('modalSubDetail');
+  } catch(e) { showToast('Lỗi tải chi tiết: ' + e.message, 'err'); }
+}
+
+// ════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════
+function setTab(el, tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('main > div').forEach(d => d.style.display = 'none');
+  document.getElementById(tabId).style.display = '';
+  if (tabId === 'tabSubmissions') loadSubmissions();
+}
+
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+async function apiFetch(path, method = 'GET', body) {
+  const opts = {
+    method,
+    headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(API + path, opts);
+}
+
+function parseJwt(t) {
+  try { return JSON.parse(atob(t.split('.')[1])); } catch { return {}; }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('vi-VN');
+}
+
+function showToast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>

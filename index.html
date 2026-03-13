@@ -436,6 +436,7 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
         <div class="role-badge" id="roleBadge"></div>
         <button class="btn-pw" id="btnPw" onclick="openPw()" style="display:none">🔑 Đổi mật khẩu</button>
         <button class="btn-pw" id="btnStuMgr" onclick="openStuMgr()" style="display:none;background:rgba(16,185,129,.2);border-color:rgba(16,185,129,.4);color:#6ee7b7;">👥 Quản lý HS</button>
+<a href="admin-problems.html" target="_blank" id="btnProblems" class="btn-pw" style="display:none;text-decoration:none;background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(5,150,105,.25));border-color:rgba(16,185,129,.5);color:#6ee7b7;">💻 Bài tập lập trình</a>
         <a href="bang-diem.html" target="_blank" id="btnDB" class="btn-pw" style="display:none;text-decoration:none;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(168,85,247,.3));border-color:rgba(168,85,247,.5);color:#c4b5fd;">📊 Bảng điểm <span id="dbDot" class="notif-dot" style="display:none"></span></a>
         <button class="btn-out" onclick="doLogout()">🚪 Đăng xuất</button>
       </div>
@@ -884,6 +885,8 @@ function applyRole() {
     document.getElementById('stuBanner').style.display = 'none';
     document.getElementById('btnPw').style.display = 'flex';
     if (btnDB) { btnDB.style.display = 'flex'; }
+    const btnProblems = document.getElementById('btnProblems');
+    if (btnProblems) btnProblems.style.display = 'flex';
     // Show student management button
     const btnStuMgr = document.getElementById('btnStuMgr');
     if (btnStuMgr) btnStuMgr.style.display = 'flex';
@@ -894,6 +897,8 @@ function applyRole() {
     document.getElementById('addArea').style.display = 'none';
     document.getElementById('btnPw').style.display = 'none';
     if (btnDB) btnDB.style.display = 'none';
+    const btnProblems2 = document.getElementById('btnProblems');
+    if (btnProblems2) btnProblems2.style.display = 'none';
     const btnStuMgr = document.getElementById('btnStuMgr');
     if (btnStuMgr) btnStuMgr.style.display = 'none';
     // Show student info in banner
@@ -972,7 +977,19 @@ function render(){
         const dot=hasContent
           ?'<span style="font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;border-radius:6px;padding:2px 8px;">✓ Có nội dung</span>'+(hasIV?'<span class="iv-badge">🎬 Video TT</span>':'')
           :'<span style="font-size:.7rem;color:var(--text-muted);background:var(--blue-pale);border-radius:6px;padding:2px 8px;">Chưa có nội dung</span>';
-        const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
+        // ↓ THÊM DÒNG NÀY
+const submitBtn=`<a class="lesson-upload-btn" 
+  href="submit.html?item_id=${it.id}&title=${encodeURIComponent(it.title)}"
+  onclick="event.stopPropagation()" 
+  style="text-decoration:none;background:linear-gradient(135deg,#059669,#10b981);
+         color:white;border:none;padding:6px 13px;border-radius:8px;
+         font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;
+         align-items:center;gap:5px;"
+  >💻 Nộp bài</a>`;
+
+const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick=...
+
+          const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
         const delBtn=isAdmin()?`<button class="ib del" onclick="event.stopPropagation();delItem('${s.id}','${it.id}')" title="Xóa">🗑️</button>`:'';
         iHTML+=`<div class="lesson-row" onclick="openLessonView('${s.id}','${it.id}')">
           <div class="lr-num">${idx+1}</div>
@@ -980,7 +997,10 @@ function render(){
             <div class="lr-title">${esc(it.title)}</div>
             <div class="lr-meta">${dot}${fileBadges?`<div class="i-files" style="margin-top:5px;">${fileBadges}</div>`:''}</div>
           </div>
-          <div class="lr-actions" onclick="event.stopPropagation()">${uploadBtn}${delBtn}</div>
+          <div class="lr-actions" onclick="event.stopPropagation()">
+  ${submitBtn}${uploadBtn}${delBtn}
+</div>
+
         </div>`;
       });
     }
