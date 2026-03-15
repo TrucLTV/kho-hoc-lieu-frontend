@@ -1911,6 +1911,32 @@ window.addEventListener('message', async function(e) {
 
 
 
+
+/* ── Auto-login: kiểm tra token khi trang load ── */
+(async function initApp() {
+  const token = getToken();
+  if (!token) return; // không có token → ở lại trang đăng nhập
+
+  try {
+    // Xác minh token còn hợp lệ
+    await apiFetch('/api/content');
+    // Token hợp lệ → decode và tự đăng nhập
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    role = payload.role;
+    _currentStudentName = payload.name;
+    loggedStudent = (payload.role === 'student')
+      ? { id: payload.id, name: payload.name, user: payload.username }
+      : null;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    applyRole();
+    await loadDataFromAPI();
+  } catch(e) {
+    // Token hết hạn hoặc lỗi → xóa token, hiện trang đăng nhập
+    clearToken();
+  }
+})();
+
 </script>
 </body>
 </html>
