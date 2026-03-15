@@ -977,19 +977,8 @@ function render(){
         const dot=hasContent
           ?'<span style="font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;border-radius:6px;padding:2px 8px;">✓ Có nội dung</span>'+(hasIV?'<span class="iv-badge">🎬 Video TT</span>':'')
           :'<span style="font-size:.7rem;color:var(--text-muted);background:var(--blue-pale);border-radius:6px;padding:2px 8px;">Chưa có nội dung</span>';
-        // ↓ THÊM DÒNG NÀY
-const submitBtn=`<a class="lesson-upload-btn" 
-  href="submit.html?item_id=${it.id}&title=${encodeURIComponent(it.title)}"
-  onclick="event.stopPropagation()" 
-  style="text-decoration:none;background:linear-gradient(135deg,#059669,#10b981);
-         color:white;border:none;padding:6px 13px;border-radius:8px;
-         font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;
-         align-items:center;gap:5px;"
-  >💻 Nộp bài</a>`;
-
-const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick=...
-
-          const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
+        const submitBtn=`<a class="lesson-upload-btn" href="submit.html?item_id=${it.id}&title=${encodeURIComponent(it.title)}" onclick="event.stopPropagation()" style="text-decoration:none;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;padding:6px 13px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">💻 Nộp bài</a>`;
+        const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
         const delBtn=isAdmin()?`<button class="ib del" onclick="event.stopPropagation();delItem('${s.id}','${it.id}')" title="Xóa">🗑️</button>`:'';
         iHTML+=`<div class="lesson-row" onclick="openLessonView('${s.id}','${it.id}')">
           <div class="lr-num">${idx+1}</div>
