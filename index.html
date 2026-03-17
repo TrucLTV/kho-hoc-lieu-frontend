@@ -2143,36 +2143,47 @@ async function exSubmit(itemId, itemTitle) {
   const outBox = document.getElementById('exout-' + itemId);
 
   if (outBox) outBox.style.display = 'none';
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Đang nộp...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Đang chấm...'; }
   if (resBox) {
     resBox.className = 'ex-result-box verdict-judging';
     resBox.style.display = 'block';
-    document.getElementById('exresult-title-' + itemId).textContent = '⏳ Đang nộp bài...';
-    document.getElementById('exresult-sub-' + itemId).textContent = '';
+    document.getElementById('exresult-title-' + itemId).textContent = '⏳ Đang chấm bài...';
+    document.getElementById('exresult-sub-' + itemId).textContent = 'Hệ thống đang chạy testcase, vui lòng chờ.';
     document.getElementById('extc-' + itemId).innerHTML = '';
   }
 
   try {
-    console.log('[KHL] Nộp bài:', itemTitle, lang, code.length, 'chars');
+    // Bước 1: Tìm problem_id theo item_id
+    let problem_id = null;
+    try {
+      const probs = await apiFetch(`/api/problems?item_id=${itemId}`);
+      if (Array.isArray(probs) && probs.length > 0) problem_id = probs[0].id;
+    } catch(e) { console.warn('[KHL] Không tìm được problem:', e); }
 
-    // Nộp qua /api/submissions/simple
-    const result = await apiFetch('/api/submissions/simple', {
-      method: 'POST',
-      body: JSON.stringify({
-        item_id:     itemId,
-        item_title:  itemTitle,
-        source_code: code,
-        language:    lang
-      })
-    });
+    if (problem_id) {
+      // Bước 2a: Có testcase → chấm tự động qua judge
+      console.log('[KHL] Judge bài:', itemTitle, 'problem_id:', problem_id);
+      const result = await apiFetch('/api/submissions', {
+        method: 'POST',
+        body: JSON.stringify({ problem_id, language: lang, source_code: code })
+      });
+      console.log('[KHL] Kết quả:', result.status, result.score);
+      exShowResult(itemId, result);
 
-    console.log('[KHL] Nộp thành công:', result);
-
-    if (resBox) {
-      resBox.className = 'ex-result-box verdict-ac';
-      resBox.style.display = 'block';
-      document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
-      document.getElementById('exresult-sub-' + itemId).textContent = 'Giáo viên đã nhận bài và sẽ chấm điểm sớm.';
+    } else {
+      // Bước 2b: Không có testcase → lưu để GV chấm thủ công
+      console.log('[KHL] Lưu bài đơn giản:', itemTitle);
+      await apiFetch('/api/submissions/simple', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, item_title: itemTitle, source_code: code, language: lang })
+      });
+      if (resBox) {
+        resBox.className = 'ex-result-box verdict-ac';
+        resBox.style.display = 'block';
+        document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
+        document.getElementById('exresult-sub-' + itemId).textContent = 'Giáo viên đã nhận bài và sẽ chấm điểm sớm.';
+        document.getElementById('extc-' + itemId).innerHTML = '';
+      }
     }
 
     _submittedItems.add(itemId);
@@ -2190,13 +2201,14 @@ async function exSubmit(itemId, itemTitle) {
       }
     }
   } catch(e) {
+    console.error('[KHL] Lỗi nộp bài:', e);
     if (resBox) {
       resBox.className = 'ex-result-box verdict-err';
       resBox.style.display = 'block';
       document.getElementById('exresult-title-' + itemId).textContent = '❌ Lỗi nộp bài';
-      document.getElementById('exresult-sub-' + itemId).textContent = e.message || e.error || 'Lỗi kết nối';
+      document.getElementById('exresult-sub-' + itemId).textContent = e.error || e.message || 'Lỗi kết nối server';
     }
-    toast('❌ Lỗi: ' + (e.message || e.error || 'Lỗi kết nối'), 'err');
+    toast('❌ Lỗi: ' + (e.error || e.message || 'Lỗi kết nối'), 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Nộp bài'; }
   }
