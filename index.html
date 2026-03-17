@@ -2097,10 +2097,12 @@ async function exSubmit(itemId, itemTitle) {
   try {
     // Bước 1: Tìm problem_id theo item_id
     let problem_id = null;
+    console.log('[KHL] Tìm bài tập với item_id:', itemId);
     try {
       const probs = await apiFetch(`/api/problems?item_id=${itemId}`);
+      console.log('[KHL] Kết quả tìm kiếm:', JSON.stringify(probs));
       if (Array.isArray(probs) && probs.length > 0) problem_id = probs[0].id;
-    } catch(e) { console.warn('[KHL] Không tìm được problem:', e); }
+    } catch(e) { console.warn('[KHL] Lỗi tìm problem:', e); }
 
     if (problem_id) {
       // Bước 2a: Có testcase → chấm tự động qua judge

@@ -472,6 +472,11 @@ function renderProblemList(problems) {
       <div style="flex:1">
         <h3>💻 ${esc(p.title)}</h3>
         <div class="meta">${esc(p._section)} › ${esc(p._itemTitle)} · ⏱${p.time_limit_ms}ms · ${(p.allowed_languages||[]).join(', ')}</div>
+        <div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:.7rem;color:var(--text-muted);">Item ID:</span>
+          <code style="font-size:.7rem;background:var(--blue-pale);padding:2px 7px;border-radius:5px;color:var(--blue-mid);user-select:all;">${esc(p.item_id||'chưa gắn')}</code>
+          <button onclick="copyItemId('${esc(p.item_id||'')}','${esc(p.title)}')" style="padding:2px 8px;font-size:.7rem;background:var(--blue-bright);color:white;border:none;border-radius:5px;cursor:pointer;">📋 Copy</button>
+        </div>
       </div>
       <div class="prob-actions">
         <a href="submit.html?item_id=${esc(p.item_id)}&title=${encodeURIComponent(p._itemTitle)}" target="_blank" class="btn btn-sec btn-sm">👁 Xem</a>
@@ -481,6 +486,15 @@ function renderProblemList(problems) {
       </div>
     </div>
   `).join('');
+}
+
+function copyItemId(itemId, title) {
+  if (!itemId) { showToast('Bài tập chưa được gắn item_id!', 'err'); return; }
+  navigator.clipboard.writeText(itemId).then(() => {
+    showToast(`✅ Đã copy item_id của "${title}"`, 'ok');
+  }).catch(() => {
+    prompt('Copy item_id này:', itemId);
+  });
 }
 
 // ════════════════════════════════════════════════════
