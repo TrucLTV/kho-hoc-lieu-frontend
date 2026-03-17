@@ -139,7 +139,8 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 <main>
   <div class="tabs">
     <div class="tab active" onclick="setTab(this,'tabProblems')">💻 Bài tập</div>
-    <div class="tab" onclick="setTab(this,'tabSubmissions')">📋 Bài nộp</div>
+    <div class="tab" onclick="setTab(this,'tabSubmissions')">📋 Bài nộp (Judge)</div>
+    <div class="tab" onclick="setTab(this,'tabSimpleSubs')">📥 Bài nộp học sinh</div>
   </div>
 
   <!-- TAB: Bài tập -->
@@ -166,11 +167,11 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 
   </div>
 
-  <!-- TAB: Bài nộp -->
+  <!-- TAB: Bài nộp Judge -->
   <div id="tabSubmissions" style="display:none">
     <div class="panel">
       <div class="panel-hdr">
-        <h2>📋 Tất cả bài nộp</h2>
+        <h2>📋 Bài nộp có chấm điểm (Judge)</h2>
         <button class="btn btn-sec btn-sm" onclick="loadSubmissions()">🔄 Refresh</button>
       </div>
       <div class="panel-body">
@@ -196,6 +197,37 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Bài nộp đơn giản từ học sinh (inline panel) -->
+  <div id="tabSimpleSubs" style="display:none">
+    <div class="panel">
+      <div class="panel-hdr">
+        <h2>📥 Bài nộp từ học sinh</h2>
+        <button class="btn btn-sec btn-sm" onclick="loadSimpleSubs()">🔄 Refresh</button>
+      </div>
+      <div class="panel-body">
+        <div class="form-row" style="margin-bottom:16px">
+          <select id="simpleSubFilterItem" class="form-sel" onchange="renderSimpleSubs()">
+            <option value="">— Tất cả bài —</option>
+          </select>
+          <select id="simpleSubFilterStudent" class="form-sel" onchange="renderSimpleSubs()">
+            <option value="">— Tất cả học sinh —</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="sub-table">
+            <thead>
+              <tr><th>#</th><th>Học sinh</th><th>Bài tập</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian</th></tr>
+            </thead>
+            <tbody id="simpleSubTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Nhấn Refresh để tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="simpleSubCount" style="margin-top:10px;font-size:.78rem;color:var(--text-muted);"></div>
       </div>
     </div>
   </div>
@@ -367,7 +399,7 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 
 <script>
 // ════════════════════════════════════════════════════
-const API = (localStorage.getItem('khl_api') || 'http://localhost:3001') + '/api';
+const API = 'https://kho-hoc-lieu-backend.onrender.com/api';
 const token = () => localStorage.getItem('khl_token');
 
 let allItems    = [];
@@ -388,16 +420,13 @@ let currentTestcases = [];
 // ── Load content tree để lấy items ──
 async function loadContent() {
   try {
-    const res  = await apiFetch('/content');
-    const data = await res.json();
+    const data = await apiFetch('/content');
     allItems = [];
     (data || []).forEach(sec => {
       (sec.items || []).forEach(item => {
         allItems.push({ id: item.id, title: item.title, section: sec.name });
       });
     });
-
-    // Populate item dropdowns
     const opts = allItems.map(i => `<option value="${i.id}">${esc(i.section)} › ${esc(i.title)}</option>`).join('');
     document.getElementById('itemFilter').innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
     document.getElementById('probItemId').innerHTML = '<option value="">— Chọn mục —</option>' + opts;
@@ -409,32 +438,25 @@ async function loadContent() {
 // ── Load problems ──
 async function loadProblems() {
   const itemId = document.getElementById('itemFilter').value;
-  const url    = itemId ? `/problems?item_id=${itemId}` : `/problems?item_id=all`;
-
-  // Nếu không có item_id, tải từng item (workaround – có thể cải thiện sau)
   let problems = [];
   if (!itemId) {
     for (const item of allItems) {
       try {
-        const res = await apiFetch(`/problems?item_id=${item.id}`);
-        const data = await res.json();
+        const data = await apiFetch(`/problems?item_id=${item.id}`);
         problems.push(...(data || []).map(p => ({ ...p, _itemTitle: item.title, _section: item.section })));
       } catch(_) {}
     }
   } else {
     try {
-      const res  = await apiFetch(`/problems?item_id=${itemId}`);
-      problems   = (await res.json()).map(p => {
+      const data = await apiFetch(`/problems?item_id=${itemId}`);
+      problems = (data || []).map(p => {
         const item = allItems.find(i => i.id === itemId);
         return { ...p, _itemTitle: item?.title || '', _section: item?.section || '' };
       });
     } catch(e) { console.error(e); }
   }
-
   allProblems = problems;
   renderProblemList(problems);
-
-  // Update submission filter
   const probOpts = problems.map(p => `<option value="${p.id}">${esc(p.title)}</option>`).join('');
   document.getElementById('subFilterProb').innerHTML = '<option value="">— Tất cả bài tập —</option>' + probOpts;
 }
@@ -473,29 +495,28 @@ function showCreateProbModal() {
 
 async function editProblem(id) {
   try {
-    const res  = await apiFetch(`/problems/${id}`);
-    const prob = await res.json();
+    const prob = await apiFetch(`/problems/${id}`);
     editingProbId = id;
     document.getElementById('modalProbTitle').textContent = '✏️ Sửa bài tập';
-    document.getElementById('probItemId').value     = prob.item_id || '';
-    document.getElementById('probTitle').value      = prob.title || '';
-    document.getElementById('probDesc').value       = prob.description || '';
-    document.getElementById('probInputFmt').value   = prob.input_format || '';
-    document.getElementById('probOutputFmt').value  = prob.output_format || '';
-    document.getElementById('probConstraints').value= prob.constraints || '';
-    document.getElementById('probExIn').value       = prob.example_input || '';
-    document.getElementById('probExOut').value      = prob.example_output || '';
-    document.getElementById('probTimeLimit').value  = prob.time_limit_ms || 2000;
-    document.getElementById('probMemLimit').value   = prob.memory_limit_mb || 256;
+    document.getElementById('probItemId').value      = prob.item_id || '';
+    document.getElementById('probTitle').value       = prob.title || '';
+    document.getElementById('probDesc').value        = prob.description || '';
+    document.getElementById('probInputFmt').value    = prob.input_format || '';
+    document.getElementById('probOutputFmt').value   = prob.output_format || '';
+    document.getElementById('probConstraints').value = prob.constraints || '';
+    document.getElementById('probExIn').value        = prob.example_input || '';
+    document.getElementById('probExOut').value       = prob.example_output || '';
+    document.getElementById('probTimeLimit').value   = prob.time_limit_ms || 2000;
+    document.getElementById('probMemLimit').value    = prob.memory_limit_mb || 256;
     const langs = prob.allowed_languages || [];
     document.querySelectorAll('input[name="lang"]').forEach(cb => { cb.checked = langs.includes(cb.value); });
     openModal('modalProblem');
-  } catch(e) { showToast('Lỗi tải bài tập: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi tải bài tập: ' + (e.error || e.message || ''), 'err'); }
 }
 
 async function saveProblem() {
-  const item_id = document.getElementById('probItemId').value;
-  const title   = document.getElementById('probTitle').value.trim();
+  const item_id     = document.getElementById('probItemId').value;
+  const title       = document.getElementById('probTitle').value.trim();
   const description = document.getElementById('probDesc').value.trim();
   if (!item_id || !title || !description) {
     showToast('Vui lòng điền đầy đủ: mục, tiêu đề, đề bài', 'err'); return;
@@ -505,35 +526,33 @@ async function saveProblem() {
 
   const body = {
     item_id, title, description,
-    input_format:   document.getElementById('probInputFmt').value,
-    output_format:  document.getElementById('probOutputFmt').value,
-    constraints:    document.getElementById('probConstraints').value,
-    example_input:  document.getElementById('probExIn').value,
-    example_output: document.getElementById('probExOut').value,
-    time_limit_ms:  parseInt(document.getElementById('probTimeLimit').value) || 2000,
-    memory_limit_mb:parseInt(document.getElementById('probMemLimit').value) || 256,
+    input_format:    document.getElementById('probInputFmt').value,
+    output_format:   document.getElementById('probOutputFmt').value,
+    constraints:     document.getElementById('probConstraints').value,
+    example_input:   document.getElementById('probExIn').value,
+    example_output:  document.getElementById('probExOut').value,
+    time_limit_ms:   parseInt(document.getElementById('probTimeLimit').value) || 2000,
+    memory_limit_mb: parseInt(document.getElementById('probMemLimit').value) || 256,
     allowed_languages: langs
   };
 
   try {
     const url    = editingProbId ? `/problems/${editingProbId}` : '/problems';
     const method = editingProbId ? 'PUT' : 'POST';
-    const res = await apiFetch(url, method, body);
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    await apiFetch(url, { method, body: JSON.stringify(body) });
     showToast(editingProbId ? '✅ Đã cập nhật bài tập' : '✅ Đã tạo bài tập mới', 'ok');
     closeModal('modalProblem');
     await loadProblems();
-  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi: ' + (e.error || e.message || ''), 'err'); }
 }
 
 async function deleteProblem(id, title) {
   if (!confirm(`Xóa bài tập "${title}"?\nTất cả testcase và bài nộp sẽ bị xóa!`)) return;
   try {
-    const res = await apiFetch(`/problems/${id}`, 'DELETE');
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    await apiFetch(`/problems/${id}`, { method: 'DELETE' });
     showToast('🗑 Đã xóa bài tập', 'ok');
     await loadProblems();
-  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi: ' + (e.error || e.message || ''), 'err'); }
 }
 
 function clearProbForm() {
@@ -558,8 +577,7 @@ async function openTestcaseModal(probId, probTitle) {
 
 async function loadTestcases(probId) {
   try {
-    const res  = await apiFetch(`/problems/${probId}`);
-    const prob = await res.json();
+    const prob = await apiFetch(`/problems/${probId}`);
     currentTestcases = prob.testcases || [];
     renderTestcases();
   } catch(e) { showToast('Lỗi tải testcase', 'err'); }
@@ -589,48 +607,40 @@ async function addTestcase() {
   const expected = document.getElementById('tcExpected').value.trim();
   const isSample = document.getElementById('tcIsSample').checked;
   const weight   = parseInt(document.getElementById('tcWeight').value) || 1;
-
   if (!expected) { showToast('Expected output không được trống', 'err'); return; }
-
   try {
-    const res = await apiFetch(`/problems/${currentTcProbId}/testcases`, 'POST', {
-      input, expected, is_sample: isSample, score_weight: weight,
-      position: currentTestcases.length
+    await apiFetch(`/problems/${currentTcProbId}/testcases`, {
+      method: 'POST',
+      body: JSON.stringify({ input, expected, is_sample: isSample, score_weight: weight, position: currentTestcases.length })
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
     showToast('✅ Đã thêm testcase', 'ok');
     document.getElementById('tcInput').value = '';
     document.getElementById('tcExpected').value = '';
     document.getElementById('tcIsSample').checked = false;
     await loadTestcases(currentTcProbId);
-  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi: ' + (e.error || e.message || ''), 'err'); }
 }
 
 async function deleteTestcase(id) {
   if (!confirm('Xóa testcase này?')) return;
   try {
-    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/${id}`, 'DELETE');
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    await apiFetch(`/problems/${currentTcProbId}/testcases/${id}`, { method: 'DELETE' });
     showToast('🗑 Đã xóa testcase', 'ok');
     await loadTestcases(currentTcProbId);
-  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi: ' + (e.error || e.message || ''), 'err'); }
 }
 
 async function deleteAllTestcases() {
   if (!confirm(`Xóa TẤT CẢ ${currentTestcases.length} testcase?\nHành động này không thể hoàn tác!`)) return;
   try {
-    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/bulk`, 'POST', { testcases: [] });
-    if (!res.ok && res.status !== 400) { const e = await res.json(); throw new Error(e.error); }
-    // Xóa từng cái
     for (const tc of currentTestcases) {
-      await apiFetch(`/problems/${currentTcProbId}/testcases/${tc.id}`, 'DELETE');
+      await apiFetch(`/problems/${currentTcProbId}/testcases/${tc.id}`, { method: 'DELETE' }).catch(() => {});
     }
     showToast('🗑 Đã xóa tất cả testcase', 'ok');
     await loadTestcases(currentTcProbId);
-  } catch(e) { showToast('Lỗi: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi: ' + (e.error || e.message || ''), 'err'); }
 }
 
-// ── Upload JSON testcases ──
 async function handleTcUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -639,38 +649,27 @@ async function handleTcUpload(event) {
     let data;
     try { data = JSON.parse(text); }
     catch { showToast('File JSON không hợp lệ', 'err'); return; }
-
-    if (!Array.isArray(data) || !data.length)
-      { showToast('Mảng testcase rỗng hoặc sai định dạng', 'err'); return; }
-
-    // Validate
-    const valid = data.every(tc => tc.expected !== undefined);
-    if (!valid) { showToast('Mỗi testcase cần có trường "expected"', 'err'); return; }
-
+    if (!Array.isArray(data) || !data.length) { showToast('Mảng testcase rỗng hoặc sai định dạng', 'err'); return; }
+    if (!data.every(tc => tc.expected !== undefined)) { showToast('Mỗi testcase cần có trường "expected"', 'err'); return; }
     if (!confirm(`Upload ${data.length} testcase? Testcase cũ sẽ bị xóa hết!`)) return;
-
-    const res = await apiFetch(`/problems/${currentTcProbId}/testcases/bulk`, 'POST', { testcases: data });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    await apiFetch(`/problems/${currentTcProbId}/testcases/bulk`, {
+      method: 'POST',
+      body: JSON.stringify({ testcases: data })
+    });
     showToast(`✅ Đã upload ${data.length} testcase`, 'ok');
     await loadTestcases(currentTcProbId);
     event.target.value = '';
-  } catch(e) { showToast('Lỗi upload: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi upload: ' + (e.error || e.message || ''), 'err'); }
 }
 
-// ════════════════════════════════════════════════════
-// SUBMISSIONS
-// ════════════════════════════════════════════════════
 async function loadSubmissions() {
   const probId  = document.getElementById('subFilterProb').value;
   const status  = document.getElementById('subFilterStatus').value;
   let url = '/submissions';
-  const qs = [];
-  if (probId)  qs.push(`problem_id=${probId}`);
-  if (qs.length) url += '?' + qs.join('&');
+  if (probId) url += `?problem_id=${probId}`;
 
   try {
-    const res  = await apiFetch(url);
-    let data   = await res.json();
+    let data = await apiFetch(url);
     if (status) data = data.filter(s => s.status === status);
 
     const statusLabel = {
@@ -681,7 +680,6 @@ async function loadSubmissions() {
       accepted:'b-ac', wrong_answer:'b-wa', partial:'b-pa', error:'b-err',
       judging:'b-pend', pending:'b-pend'
     };
-
     const probMap = {};
     allProblems.forEach(p => { probMap[p.id] = p.title; });
 
@@ -690,7 +688,6 @@ async function loadSubmissions() {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Không có bài nộp nào</td></tr>';
       return;
     }
-
     tbody.innerHTML = data.map(s => `
       <tr>
         <td>${esc(s.student_name || '—')}</td>
@@ -703,16 +700,14 @@ async function loadSubmissions() {
         <td><button class="btn btn-sec btn-sm" onclick="viewSubmission('${s.id}')">📄 Xem</button></td>
       </tr>
     `).join('');
-  } catch(e) { showToast('Lỗi tải submissions: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi tải submissions: ' + (e.error || e.message || ''), 'err'); }
 }
 
 async function viewSubmission(id) {
   try {
-    const res  = await apiFetch(`/submissions/${id}`);
-    const data = await res.json();
+    const data = await apiFetch(`/submissions/${id}`);
     const body = document.getElementById('subDetailBody');
     const statusLabel = { accepted:'✅ Accepted', wrong_answer:'❌ Wrong Answer', partial:'⚠️ Partial', error:'🔴 Error' };
-
     body.innerHTML = `
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
         <span class="status-badge" style="font-size:.85rem;padding:6px 14px;background:#dbeafe;color:#1e40af">${statusLabel[data.status]||data.status}</span>
@@ -734,7 +729,7 @@ async function viewSubmission(id) {
       ` : ''}
     `;
     openModal('modalSubDetail');
-  } catch(e) { showToast('Lỗi tải chi tiết: ' + e.message, 'err'); }
+  } catch(e) { showToast('Lỗi tải chi tiết: ' + (e.error || e.message || ''), 'err'); }
 }
 
 // ════════════════════════════════════════════════════
@@ -746,18 +741,141 @@ function setTab(el, tabId) {
   document.querySelectorAll('main > div').forEach(d => d.style.display = 'none');
   document.getElementById(tabId).style.display = '';
   if (tabId === 'tabSubmissions') loadSubmissions();
+  if (tabId === 'tabSimpleSubs') loadSimpleSubs();
+}
+
+// ════════════════════════════════════════════════════
+// SIMPLE SUBMISSIONS (từ inline panel học sinh)
+// ════════════════════════════════════════════════════
+let _simpleSubs = [];
+
+async function loadSimpleSubs() {
+  const tbody = document.getElementById('simpleSubTableBody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
+  try {
+    const data = await apiFetch('/submissions');
+    // Lọc bài nộp có item_id (không có problem_id) — từ inline panel
+    _simpleSubs = (data || []).filter(s => s.item_id || s.source_code);
+
+    // Populate bộ lọc
+    const items    = [...new Set(_simpleSubs.map(s => s.item_title || s.item_id || '').filter(Boolean))];
+    const students = [...new Set(_simpleSubs.map(s => s.student_name || '').filter(Boolean))];
+
+    document.getElementById('simpleSubFilterItem').innerHTML =
+      '<option value="">— Tất cả bài —</option>' +
+      items.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join('');
+
+    document.getElementById('simpleSubFilterStudent').innerHTML =
+      '<option value="">— Tất cả học sinh —</option>' +
+      students.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+    renderSimpleSubs();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626">❌ Lỗi: ${esc(e.error||e.message||'Không tải được')}</td></tr>`;
+  }
+}
+
+function renderSimpleSubs() {
+  const filterItem    = document.getElementById('simpleSubFilterItem').value;
+  const filterStudent = document.getElementById('simpleSubFilterStudent').value;
+  const tbody = document.getElementById('simpleSubTableBody');
+
+  let subs = _simpleSubs;
+  if (filterItem)    subs = subs.filter(s => (s.item_title||s.item_id||'') === filterItem);
+  if (filterStudent) subs = subs.filter(s => (s.student_name||'') === filterStudent);
+
+  document.getElementById('simpleSubCount').textContent = `Hiển thị ${subs.length} / ${_simpleSubs.length} bài nộp`;
+
+  if (!subs.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-ico">📭</div><p>Chưa có bài nộp nào.</p></div></td></tr>`;
+    return;
+  }
+
+  // Sắp xếp mới nhất trước
+  subs = [...subs].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
+
+  tbody.innerHTML = subs.map((s, i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-bright);color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${(s.student_name||'?').charAt(0).toUpperCase()}
+          </div>
+          <strong>${esc(s.student_name || '—')}</strong>
+        </div>
+      </td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.item_title||'')}">
+        📝 ${esc(s.item_title || s.item_id || '—')}
+      </td>
+      <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
+      <td>
+        ${s.source_code
+          ? `<button class="btn btn-sec btn-sm" onclick="viewSimpleCode(${i})">👁 Xem code</button>`
+          : '<span style="color:var(--text-muted);font-size:.78rem">—</span>'
+        }
+      </td>
+      <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">
+        ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function viewSimpleCode(idx) {
+  const subs = (() => {
+    const fi = document.getElementById('simpleSubFilterItem').value;
+    const fs = document.getElementById('simpleSubFilterStudent').value;
+    let s = _simpleSubs;
+    if (fi) s = s.filter(x => (x.item_title||x.item_id||'') === fi);
+    if (fs) s = s.filter(x => (x.student_name||'') === fs);
+    return [...s].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
+  })();
+  const s = subs[idx];
+  if (!s) return;
+  const win = window.open('', '_blank', 'width=750,height=650');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Bài nộp – ${esc(s.student_name||'')}</title>
+  <style>
+    body{font-family:'Segoe UI',sans-serif;background:#0d1b2a;color:#e2e8f0;margin:0;padding:0;}
+    .hdr{background:#071e3d;padding:16px 22px;border-bottom:2px solid #1a4a8a;}
+    .hdr h2{font-size:1rem;margin:0 0 4px;color:#5b9cf6;}
+    .hdr p{font-size:.78rem;color:#94a3b8;margin:0;}
+    pre{margin:0;padding:22px;font-family:'Courier New',monospace;font-size:.88rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+  </style></head><body>
+  <div class="hdr">
+    <h2>👤 ${esc(s.student_name||'Ẩn danh')} — ${esc(s.item_title||'')}</h2>
+    <p>Ngôn ngữ: ${esc(s.language||'—')} &nbsp;·&nbsp; Nộp lúc: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}</p>
+  </div>
+  <pre>${esc(s.source_code||'(không có code)')}</pre>
+  </body></html>`);
+  win.document.close();
 }
 
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-async function apiFetch(path, method = 'GET', body) {
-  const opts = {
+async function apiFetch(path, optsOrMethod = {}, legacyBody) {
+  // Hỗ trợ cả 2 kiểu gọi:
+  // mới: apiFetch(path, { method, body })
+  // cũ:  apiFetch(path, 'POST', body)
+  let method, bodyStr, extra = {};
+  if (typeof optsOrMethod === 'string') {
+    method  = optsOrMethod;
+    bodyStr = legacyBody ? JSON.stringify(legacyBody) : undefined;
+  } else {
+    method  = optsOrMethod.method || 'GET';
+    bodyStr = optsOrMethod.body;
+    extra   = optsOrMethod.headers ? { headers: optsOrMethod.headers } : {};
+  }
+  const res = await fetch(API + path, {
     method,
-    headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  return fetch(API + path, opts);
+    headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json', ...extra.headers },
+    body: bodyStr
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw { ...json, _status: res.status };
+  return json;
 }
 
 function parseJwt(t) {

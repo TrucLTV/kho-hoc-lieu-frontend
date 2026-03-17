@@ -1030,7 +1030,7 @@ function render(){
         const dot=hasContent
           ?'<span style="font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;border-radius:6px;padding:2px 8px;">✓ Có nội dung</span>'+(hasIV?'<span class="iv-badge">🎬 Video TT</span>':'')
           :'<span style="font-size:.7rem;color:var(--text-muted);background:var(--blue-pale);border-radius:6px;padding:2px 8px;">Chưa có nội dung</span>';
-        const isExercise = s.type === 'exercise';
+        const isExercise = s.type === 'exercise' || s.type === 'Exercise';
         const isSubmitted = _submittedItems.has(it.id);
         const submitBadge = isSubmitted ? `<span class="ex-submitted-badge">✓ Đã nộp</span>` : '';
         // Nút xem tài liệu/nội dung (mở modal cũ)
@@ -2136,16 +2136,14 @@ async function exSubmit(itemId, itemTitle) {
   const code = ed ? ed.getValue().trim() : '';
   if (!code) { toast('⚠️ Vui lòng viết code trước khi nộp!', 'err'); return; }
 
-  const sel = document.getElementById('exlang-' + itemId);
+  const sel  = document.getElementById('exlang-' + itemId);
   const lang = sel ? sel.value : 'python';
-  const btn = document.getElementById('exsubmit-' + itemId);
+  const btn    = document.getElementById('exsubmit-' + itemId);
   const resBox = document.getElementById('exresult-' + itemId);
   const outBox = document.getElementById('exout-' + itemId);
 
   if (outBox) outBox.style.display = 'none';
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Đang chấm...'; }
-
-  // Hiện trạng thái đang chấm
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Đang nộp...'; }
   if (resBox) {
     resBox.className = 'ex-result-box verdict-judging';
     resBox.style.display = 'block';
@@ -2155,41 +2153,68 @@ async function exSubmit(itemId, itemTitle) {
   }
 
   try {
-    // Lấy problem_id từ API nếu có
-    let problem_id = null;
+    // Thử nộp qua judge API trước (nếu có problem_id)
+    let judged = false;
     try {
-      const probRes = await apiFetch(`/api/problems?item_id=${itemId}`);
-      const probs = await probRes.json();
-      if (probs && probs.length > 0) problem_id = probs[0].id;
-    } catch(e) {}
+      const probs = await apiFetch(`/api/problems?item_id=${itemId}`);
+      if (Array.isArray(probs) && probs.length > 0) {
+        const result = await apiFetch('/api/submissions', {
+          method: 'POST',
+          body: JSON.stringify({ problem_id: probs[0].id, language: lang, source_code: code })
+        });
+        exShowResult(itemId, result);
+        judged = true;
+      }
+    } catch(e) { /* không có judge, tiếp tục */ }
 
-    if (problem_id) {
-      // Nộp qua judge API (submit.html flow)
-      const res = await apiFetch('/api/submissions', {
-        method: 'POST',
-        body: JSON.stringify({ problem_id, language: lang, source_code: code })
-      });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Lỗi server'); }
-      const result = await res.json();
-      exShowResult(itemId, result);
-    } else {
-      // Không có judge → lưu bài nộp đơn giản
-      await apiFetch('/api/submissions', {
-        method: 'POST',
-        body: JSON.stringify({ item_id: itemId, item_title: itemTitle, code, language: lang, student_name: _currentStudentName || 'Học sinh' })
-      }).catch(() => {}); // bỏ qua lỗi nếu API chưa có
+    if (!judged) {
+      // Lưu bài nộp qua /api/scores để GV thấy trong bảng điểm
+      let saved = false;
+      try {
+        await apiFetch('/api/scores', {
+          method: 'POST',
+          body: JSON.stringify({
+            lesson_id:    itemId,
+            lesson_title: itemTitle,
+            score:        0,
+            correct:      0,
+            total:        0,
+            note:         `[CODE - ${lang.toUpperCase()}]\n${code.slice(0, 2000)}`
+          })
+        });
+        saved = true;
+      } catch(e) { console.warn('[KHL] /api/scores failed:', e); }
+
+      // Fallback: thử /api/submissions với payload đơn giản
+      if (!saved) {
+        try {
+          await apiFetch('/api/submissions', {
+            method: 'POST',
+            body: JSON.stringify({
+              item_id:      itemId,
+              item_title:   itemTitle,
+              source_code:  code,
+              language:     lang,
+              student_name: _currentStudentName || 'Học sinh'
+            })
+          });
+          saved = true;
+        } catch(e) { console.warn('[KHL] /api/submissions failed:', e); }
+      }
+
       if (resBox) {
         resBox.className = 'ex-result-box verdict-ac';
         resBox.style.display = 'block';
         document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
-        document.getElementById('exresult-sub-' + itemId).textContent = 'Giáo viên sẽ chấm điểm và phản hồi sớm.';
+        document.getElementById('exresult-sub-' + itemId).textContent =
+          saved ? 'Giáo viên đã nhận bài và sẽ chấm điểm sớm.' : 'Đã lưu tạm – giáo viên sẽ xem sau.';
       }
     }
 
     _submittedItems.add(itemId);
     toast('✅ Đã nộp bài: ' + itemTitle);
 
-    // Thêm badge "Đã nộp"
+    // Badge "Đã nộp"
     const wrap = document.getElementById('exwrap-' + itemId);
     if (wrap && !wrap.querySelector('.ex-submitted-badge')) {
       const nopBtn = wrap.querySelector('.lesson-upload-btn');
@@ -2205,9 +2230,9 @@ async function exSubmit(itemId, itemTitle) {
       resBox.className = 'ex-result-box verdict-err';
       resBox.style.display = 'block';
       document.getElementById('exresult-title-' + itemId).textContent = '❌ Lỗi nộp bài';
-      document.getElementById('exresult-sub-' + itemId).textContent = e.message;
+      document.getElementById('exresult-sub-' + itemId).textContent = e.message || e.error || 'Lỗi kết nối';
     }
-    toast('❌ Lỗi: ' + e.message, 'err');
+    toast('❌ Lỗi: ' + (e.message || e.error || 'Lỗi kết nối'), 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Nộp bài'; }
   }
