@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kho Học Liệu</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"/>
 <style>
 :root{
   --blue-deep:#071e3d;--blue-navy:#0a2540;--blue-mid:#1a4a8a;
@@ -366,6 +364,9 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
 .ex-lang-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .ex-lang-sel{padding:7px 10px;border:2px solid var(--blue-pale);border-radius:9px;font-family:inherit;font-size:.81rem;font-weight:600;color:var(--text-dark);background:white;outline:none;cursor:pointer;}
 .ex-lang-sel:focus{border-color:var(--blue-bright);}
+.ex-code-area{width:100%;min-height:220px;font-family:'Courier New',Courier,monospace;font-size:.88rem;line-height:1.6;background:#1e2a3a;color:#e2e8f0;border:2px solid #2d4a6a;border-radius:9px;padding:14px 16px;resize:vertical;box-sizing:border-box;outline:none;tab-size:4;caret-color:#5b9cf6;}
+.ex-code-area:focus{border-color:#5b9cf6;}
+.ex-code-area::placeholder{color:#4a6278;}
 .ex-btn-row{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
 .ex-btn-run{padding:8px 16px;background:var(--blue-bright);color:white;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
 .ex-btn-run:hover{background:var(--blue-mid);}
@@ -395,9 +396,6 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
 .ex-tc-btn.pass{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;}
 .ex-tc-btn.fail{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;}
 .ex-submitted-badge{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;border-radius:8px;padding:2px 9px;font-size:.7rem;font-weight:800;}
-/* CodeMirror overrides inside inline panel */
-.ex-inline-panel .CodeMirror{height:280px;border-radius:9px;font-size:.82rem;border:2px solid var(--blue-pale);}
-.ex-inline-panel .CodeMirror-focused{border-color:var(--blue-bright);}
 .spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
@@ -793,12 +791,6 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
 <!-- TOAST -->
 <div class="toast t-ok" id="toast"><span id="toastMsg"></span></div>
 
-<!-- CodeMirror -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
-
 <script>
 /* ── AUTH ── */
 /* ══════════════════════════════════════════
@@ -1069,7 +1061,7 @@ function render(){
                 </select>
                 <button class="ex-btn-reset" onclick="exResetCode('${it.id}')">🔄 Reset</button>
               </div>
-              <textarea id="excode-${it.id}"></textarea>
+              <textarea id="excode-${it.id}" class="ex-code-area" placeholder="// Dán hoặc viết code của bạn tại đây..." spellcheck="false"></textarea>
               <div class="ex-btn-row">
                 <button class="ex-btn-run" onclick="exRunCode('${it.id}')">▶ Chạy thử</button>
                 <button class="ex-btn-submit" id="exsubmit-${it.id}" onclick="exSubmit('${it.id}','${esc(it.title).replace(/'/g,"\\'")}')">🚀 Nộp bài</button>
@@ -2007,39 +1999,12 @@ window.addEventListener('message', async function(e) {
 
 /* ── INLINE EXERCISE PANEL ── */
 const _submittedItems = new Set();
-const _exEditors = {};  // itemId → CodeMirror instance
 
 const EX_TEMPLATES = {
-  python: `# Viết code Python tại đây
-# Đọc input: input()   In output: print()
-
-`,
-  javascript: `// Viết code JavaScript tại đây
-// In output: console.log()
-
-`,
-  c: `#include <stdio.h>
-
-int main() {
-    // Viết code C tại đây
-    return 0;
-}
-`,
-  cpp: `#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    // Viết code C++ tại đây
-    return 0;
-}
-`
-};
-
-const EX_MODE_MAP = {
-  python: 'python',
-  javascript: 'javascript',
-  c: 'text/x-csrc',
-  cpp: 'text/x-c++src'
+  python: `# Viết code Python tại đây\n# Đọc input: input()   In output: print()\n\n`,
+  javascript: `// Viết code JavaScript tại đây\n// In output: console.log()\n\n`,
+  c: `#include <stdio.h>\n\nint main() {\n    // Viết code C tại đây\n    return 0;\n}\n`,
+  cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Viết code C++ tại đây\n    return 0;\n}\n`
 };
 
 function toggleExPanel(itemId) {
@@ -2052,50 +2017,28 @@ function toggleExPanel(itemId) {
     wrap.style.boxShadow   = isOpen ? '0 4px 20px rgba(44,123,229,.14)' : '0 1px 4px rgba(44,123,229,.06)';
   }
   if (isOpen) {
-    // Khởi tạo CodeMirror nếu chưa có
-    if (!_exEditors[itemId] && typeof CodeMirror !== 'undefined') {
-      const ta = document.getElementById('excode-' + itemId);
-      if (ta) {
-        const ed = CodeMirror.fromTextArea(ta, {
-          mode: 'python',
-          theme: 'dracula',
-          lineNumbers: true,
-          indentUnit: 4,
-          tabSize: 4,
-          indentWithTabs: false,
-          lineWrapping: false,
-          autoCloseBrackets: true,
-          matchBrackets: true,
-          extraKeys: { "Tab": cm => cm.execCommand("indentMore") }
-        });
-        ed.setValue(EX_TEMPLATES.python);
-        ed.setSize(null, 280);
-        _exEditors[itemId] = ed;
-      }
+    // Set template nếu textarea đang trống
+    const ta = document.getElementById('excode-' + itemId);
+    if (ta && !ta.value.trim()) {
+      const sel = document.getElementById('exlang-' + itemId);
+      const lang = sel ? sel.value : 'python';
+      ta.value = EX_TEMPLATES[lang] || '';
     }
-    setTimeout(() => {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      if (_exEditors[itemId]) _exEditors[itemId].refresh();
-    }, 60);
+    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
   }
 }
 
 function exChangeLang(itemId) {
   const sel = document.getElementById('exlang-' + itemId);
   if (!sel) return;
-  const lang = sel.value;
-  const ed = _exEditors[itemId];
-  if (ed) {
-    ed.setOption('mode', EX_MODE_MAP[lang] || 'python');
-    ed.setValue(EX_TEMPLATES[lang] || '');
-  }
+  const ta = document.getElementById('excode-' + itemId);
+  if (ta) ta.value = EX_TEMPLATES[sel.value] || '';
 }
 
 function exResetCode(itemId) {
   const sel = document.getElementById('exlang-' + itemId);
-  const lang = sel ? sel.value : 'python';
-  const ed = _exEditors[itemId];
-  if (ed) ed.setValue(EX_TEMPLATES[lang] || '');
+  const ta  = document.getElementById('excode-' + itemId);
+  if (ta) ta.value = EX_TEMPLATES[sel ? sel.value : 'python'] || '';
   const outBox = document.getElementById('exout-' + itemId);
   const resBox = document.getElementById('exresult-' + itemId);
   if (outBox) outBox.style.display = 'none';
@@ -2103,37 +2046,36 @@ function exResetCode(itemId) {
 }
 
 function exRunCode(itemId) {
-  const ed = _exEditors[itemId];
+  const ta = document.getElementById('excode-' + itemId);
   const outBox  = document.getElementById('exout-' + itemId);
   const outText = document.getElementById('exouttxt-' + itemId);
-  if (!outBox || !outText) return;
+  if (!outBox || !outText || !ta) return;
 
-  // Chỉ chạy được JS trực tiếp; các ngôn ngữ khác cần backend
-  const sel = document.getElementById('exlang-' + itemId);
+  const sel  = document.getElementById('exlang-' + itemId);
   const lang = sel ? sel.value : 'python';
 
   if (lang !== 'javascript') {
     outBox.style.display = 'block';
     outBox.classList.remove('has-error');
     outText.style.color = '#94a3b8';
-    outText.textContent = `⚠️ Chạy thử chỉ hỗ trợ JavaScript trực tiếp.\nCác ngôn ngữ khác (${lang}) cần nộp lên server để chấm.`;
+    outText.textContent = `⚠️ Chạy thử chỉ hỗ trợ JavaScript.\nCác ngôn ngữ khác (${lang}) cần nộp lên server để chấm.`;
     return;
   }
 
-  const code = ed ? ed.getValue() : '';
+  const code = ta.value;
   outBox.style.display = 'block';
   outBox.classList.remove('has-error');
   let output = '';
   const orig = console.log;
   console.log = (...args) => { output += args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') + '\n'; };
-  try { eval(code); } catch (e) { output = 'Lỗi: ' + e.message; outBox.classList.add('has-error'); }
+  try { eval(code); } catch(e) { output = 'Lỗi: ' + e.message; outBox.classList.add('has-error'); }
   console.log = orig;
   outText.textContent = output || '(không có output)';
 }
 
 async function exSubmit(itemId, itemTitle) {
-  const ed = _exEditors[itemId];
-  const code = ed ? ed.getValue().trim() : '';
+  const ta = document.getElementById('excode-' + itemId);
+  const code = ta ? ta.value.trim() : '';
   if (!code) { toast('⚠️ Vui lòng viết code trước khi nộp!', 'err'); return; }
 
   const sel  = document.getElementById('exlang-' + itemId);
