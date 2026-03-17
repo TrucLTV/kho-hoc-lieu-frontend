@@ -192,7 +192,6 @@ main{max-width:1100px;margin:auto;padding:30px 32px 60px;position:relative;z-ind
 .fb-ppt{background:#ffedd5;color:#ea580c;}.fb-ppt:hover{background:#fed7aa;}
 .fb-vid{background:#ede9fe;color:#7c3aed;}.fb-vid:hover{background:#ddd6fe;}
 .fb-html{background:#d1fae5;color:#059669;}.fb-html:hover{background:#a7f3d0;}
-.fb-img{background:#fce7f3;color:#db2777;}.fb-img:hover{background:#fbcfe8;}
 .fb-link{background:#dbeafe;color:#2563eb;}.fb-link:hover{background:#bfdbfe;}
 .i-files{display:flex;flex-wrap:wrap;margin-top:5px;}
 /* ── STUDENT MANAGER ── */
@@ -577,11 +576,11 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
                ondragleave="this.classList.remove('drag')"
                ondrop="handleDrop(event)">
             <input type="file" id="fileInput" multiple
-                   accept=".pdf,.ppt,.pptx,.mp4,.mov,.avi,.webm,.html,.htm,.jpg,.jpeg,.png,.gif,.webp,.svg,.avif"
+                   accept=".pdf,.ppt,.pptx,.mp4,.mov,.avi,.webm,.html,.htm"
                    onchange="handleFiles(this.files)"/>
             <div style="font-size:2rem;margin-bottom:7px;">&#x1F4C2;</div>
             <p style="font-size:.82rem;color:var(--text-muted);font-weight:500;">Kéo thả hoặc <strong style="color:var(--blue-bright);">nhấn để chọn file</strong></p>
-            <p style="font-size:.71rem;color:var(--text-muted);margin-top:4px;opacity:.75;">PDF · PowerPoint · Video · HTML · Ảnh (JPG, PNG, GIF, WebP...)</p>
+            <p style="font-size:.71rem;color:var(--text-muted);margin-top:4px;opacity:.75;">PDF &#xB7; PowerPoint (.ppt/.pptx) &#xB7; Video (.mp4/.webm) &#xB7; HTML</p>
           </div>
         </div>
         <div id="panel-url" style="display:none;">
@@ -1051,26 +1050,7 @@ function render(){
           ${isExercise ? `<div class="ex-inline-panel" id="expanel-${it.id}">
             <div class="ex-panel-inner">
               ${descText?`<p class="ex-panel-label">📋 Đề bài</p><div class="ex-panel-desc">${esc(descText)}</div>`:''}
-              ${(()=>{
-                const files = it.files||[];
-                const imgs = files.filter(f=>f.type==='image');
-                const others = files.filter(f=>f.type!=='image');
-                let html='';
-                if(imgs.length){
-                  html+=`<p class="ex-panel-label" style="margin-bottom:6px;">🖼️ Hình ảnh đề bài</p>`;
-                  html+=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">`;
-                  imgs.forEach(f=>{
-                    const url=f.dataUrl||f.url||'';
-                    html+=`<img src="${url}" alt="${esc(f.name)}" style="max-width:100%;max-height:400px;border-radius:8px;border:1.5px solid var(--blue-pale);cursor:pointer;object-fit:contain;" onclick="openViewer('${f.id}',event)"/>`;
-                  });
-                  html+=`</div>`;
-                }
-                if(others.length){
-                  const badges=others.map(f=>{const ft=FILE_TYPES[f.type]||FILE_TYPES.link;const nm=f.name.length>22?f.name.slice(0,20)+'…':f.name;return`<button class="file-badge ${ft.cls}" onclick="openViewer('${f.id}',event)">${ft.ico} ${esc(nm)}</button>`;}).join('');
-                  html+=`<p class="ex-panel-label" style="margin-bottom:6px;">📎 Tài liệu đề bài</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">${badges}</div>`;
-                }
-                return html;
-              })()}
+              ${hasFiles?`<div style="margin-bottom:12px;"><p class="ex-panel-label" style="margin-bottom:6px;">📎 Tài liệu đề bài</p><div style="display:flex;flex-wrap:wrap;gap:6px;">${fileBadges}</div></div>`:''}
               <p class="ex-panel-label">✏️ Viết code</p>
               <div class="ex-lang-bar">
                 <select class="ex-lang-sel" id="exlang-${it.id}" onchange="exChangeLang('${it.id}')">
@@ -1227,12 +1207,11 @@ function delSec(id){
 
 /* ── FILE HELPERS ── */
 const FILE_TYPES={
-  pdf:  {ico:'📄',cls:'fb-pdf', label:'PDF'},
-  ppt:  {ico:'📊',cls:'fb-ppt', label:'PowerPoint'},
-  video:{ico:'🎬',cls:'fb-vid', label:'Video'},
-  html: {ico:'🌐',cls:'fb-html',label:'HTML'},
-  image:{ico:'🖼️',cls:'fb-img', label:'Ảnh'},
-  link: {ico:'🔗',cls:'fb-link',label:'Link'},
+  pdf:{ico:'📄',cls:'fb-pdf',label:'PDF'},
+  ppt:{ico:'📊',cls:'fb-ppt',label:'PowerPoint'},
+  video:{ico:'🎬',cls:'fb-vid',label:'Video'},
+  html:{ico:'🌐',cls:'fb-html',label:'HTML'},
+  link:{ico:'🔗',cls:'fb-link',label:'Link'},
 };
 function getFileType(name,mime){
   const n=(name||'').toLowerCase(),m=(mime||'').toLowerCase();
@@ -1240,7 +1219,6 @@ function getFileType(name,mime){
   if(n.endsWith('.ppt')||n.endsWith('.pptx')||m.includes('powerpoint')||m.includes('presentation'))return'ppt';
   if(n.endsWith('.html')||n.endsWith('.htm')||m.includes('html'))return'html';
   if(/\.(mp4|webm|mov|avi|mkv|ogv)$/.test(n)||m.includes('video'))return'video';
-  if(/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)$/.test(n)||m.includes('image'))return'image';
   return'link';
 }
 /* ── FILE STATE ── */
@@ -1508,15 +1486,6 @@ function _loadFileIntoViewer(file) {
       body.appendChild(fr);
       _injectStudentInfo(fr, title);
     }
-
-  } else if (file.type === 'image') {
-    const img = document.createElement('img');
-    img.src = raw;
-    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;background:#000;';
-    body.style.display = 'flex';
-    body.style.alignItems = 'center';
-    body.style.justifyContent = 'center';
-    body.appendChild(img);
 
   } else if (file.type === 'pdf') {
     const fr = document.createElement('iframe');
