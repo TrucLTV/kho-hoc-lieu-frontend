@@ -2168,38 +2168,34 @@ async function exSubmit(itemId, itemTitle) {
     } catch(e) { /* không có judge, tiếp tục */ }
 
     if (!judged) {
-      // Lưu bài nộp qua /api/scores để GV thấy trong bảng điểm
+      // Lưu bài nộp đơn giản qua endpoint /simple
       let saved = false;
       try {
-        await apiFetch('/api/scores', {
+        await apiFetch('/api/submissions/simple', {
           method: 'POST',
           body: JSON.stringify({
-            lesson_id:    itemId,
-            lesson_title: itemTitle,
-            score:        0,
-            correct:      0,
-            total:        0,
-            note:         `[CODE - ${lang.toUpperCase()}]\n${code.slice(0, 2000)}`
+            item_id:     itemId,
+            item_title:  itemTitle,
+            source_code: code,
+            language:    lang
           })
         });
         saved = true;
-      } catch(e) { console.warn('[KHL] /api/scores failed:', e); }
-
-      // Fallback: thử /api/submissions với payload đơn giản
-      if (!saved) {
+      } catch(e) {
+        console.warn('[KHL] /api/submissions/simple failed:', e);
+        // Fallback: thử /api/scores
         try {
-          await apiFetch('/api/submissions', {
+          await apiFetch('/api/scores', {
             method: 'POST',
             body: JSON.stringify({
-              item_id:      itemId,
-              item_title:   itemTitle,
-              source_code:  code,
-              language:     lang,
-              student_name: _currentStudentName || 'Học sinh'
+              lesson_id:    itemId,
+              lesson_title: itemTitle,
+              score: 0, correct: 0, total: 0,
+              note: `[CODE-${lang.toUpperCase()}]\n${code.slice(0,2000)}`
             })
           });
           saved = true;
-        } catch(e) { console.warn('[KHL] /api/submissions failed:', e); }
+        } catch(e2) { console.warn('[KHL] fallback /api/scores failed:', e2); }
       }
 
       if (resBox) {

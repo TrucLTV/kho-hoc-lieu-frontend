@@ -753,9 +753,8 @@ async function loadSimpleSubs() {
   const tbody = document.getElementById('simpleSubTableBody');
   tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
   try {
-    const data = await apiFetch('/submissions');
-    // Lọc bài nộp có item_id (không có problem_id) — từ inline panel
-    _simpleSubs = (data || []).filter(s => s.item_id || s.source_code);
+    const data = await apiFetch('/submissions/simple');
+    _simpleSubs = data || [];
 
     // Populate bộ lọc
     const items    = [...new Set(_simpleSubs.map(s => s.item_title || s.item_id || '').filter(Boolean))];
