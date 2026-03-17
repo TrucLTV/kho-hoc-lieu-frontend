@@ -1,147 +1,108 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Hệ thống Đưa Bài Tập Trực Tiếp</title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --blue-bright:#2c7be5;--blue-pale:#dbeafe;--blue-frost:#eff6ff;
-  --text-dark:#071e3d;--text-muted:#718096;--danger:#ef4444;
+/* Thêm CSS này để hỗ trợ vùng dán ảnh trong Modal */
+.upload-zone {
+    position: relative;
+    border: 2.5px dashed var(--blue-pale);
+    border-radius: 12px;
+    padding: 22px 16px;
+    text-align: center;
+    background: var(--blue-frost);
+    outline: none;
+    transition: all 0.2s;
 }
-body { font-family: 'Be Vietnam Pro', sans-serif; background: #f8f9fa; padding: 20px; }
-
-/* KHU VỰC DÁN ẢNH ĐỂ TẠO BÀI TẬP */
-.create-exercise-container {
-  max-width: 800px;
-  margin: 0 auto;
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+.upload-zone:focus {
+    border-color: var(--blue-bright);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(44, 123, 229, 0.1);
 }
-
-.paste-area {
-  width: 100%;
-  min-height: 200px;
-  border: 3px dashed var(--blue-pale);
-  background: var(--blue-frost);
-  border-radius: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s;
-  outline: none;
-  margin-top: 15px;
-  position: relative;
-  overflow: hidden;
+.paste-preview-container {
+    display: none;
+    margin-top: 10px;
 }
-
-.paste-area:focus {
-  border-color: var(--blue-bright);
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(44, 123, 229, 0.1);
-}
-
-.exercise-display {
-  width: 100%;
-  margin-top: 20px;
-  display: none;
-}
-
-#pasted-exercise-img {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid #eee;
-}
-
-.instruction {
-  text-align: center;
-  color: var(--text-muted);
-}
-
-.instruction b { color: var(--blue-bright); }
-
-.btn-reset {
-  background: var(--danger);
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  font-weight: 600;
+#paste-img-render {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 1px solid var(--blue-pale);
 }
 </style>
-</head>
-<body>
 
-<div class="create-exercise-container">
-  <h2 style="color: var(--text-dark);">📌 Đưa bài tập lên hệ thống</h2>
-  <p style="color: var(--text-muted); font-size: 0.9rem;">Sử dụng tính năng dán ảnh để hiển thị đề bài nhanh chóng</p>
-
-  <div class="paste-area" id="pasteArea" tabindex="0">
-    <div id="prompt">
-      <div style="font-size: 3rem;">🖼️</div>
-      <p class="instruction">Click vào đây rồi nhấn <b>Ctrl + V</b> để đưa ảnh bài tập lên</p>
+<div class="fg">
+  <label class="fl">Nội dung bài tập (Dán ảnh trực tiếp hoặc chọn file)</label>
+  <div class="upload-zone" id="exercisePasteZone" tabindex="0">
+    <div id="paste-msg">
+      <span class="plus">📋</span>
+      <p style="font-size: 0.85rem;">Nhấp vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh bài tập</p>
+      <p style="font-size: 0.7rem; color: var(--text-muted);">Hoặc kéo thả file vào đây</p>
     </div>
     
-    <div id="displayZone" class="exercise-display">
-      <p style="font-weight: 600; margin-bottom: 10px;">Nội dung bài tập hiện tại:</p>
-      <img id="pasted-exercise-img" src="">
-      <div style="text-align: right;">
-        <button class="btn-reset" onclick="resetExercise(event)">Xóa bài tập này</button>
-      </div>
+    <div id="pastePreview" class="paste-preview-container">
+      <img id="paste-img-render" src="">
+      <button type="button" onclick="clearExercisePaste(event)" style="display:block; margin: 8px auto; padding: 4px 12px; background: var(--danger); color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.75rem;">Xóa ảnh này</button>
     </div>
+
+    <input type="file" id="exerciseFileInput" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;" onchange="handleExFileSelect(this)">
   </div>
 </div>
 
 <script>
-const pasteArea = document.getElementById('pasteArea');
-const prompt = document.getElementById('prompt');
-const displayZone = document.getElementById('displayZone');
-const exerciseImg = document.getElementById('pasted-exercise-img');
+// Biến lưu trữ file bài tập hiện tại (dù dán hay chọn file)
+let currentExerciseFile = null;
 
-// Lắng nghe sự kiện dán
-pasteArea.addEventListener('paste', function(e) {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  
-  for (let item of items) {
-    if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
-      const blob = item.getAsFile();
-      const reader = new FileReader();
-      
-      reader.onload = function(event) {
-        // Hiển thị ảnh bài tập ngay lập tức
-        exerciseImg.src = event.target.result;
-        displayZone.style.display = 'block';
-        prompt.style.display = 'none';
-        pasteArea.style.borderStyle = 'solid'; // Đổi viền sang nét liền khi đã có nội dung
-      };
-      
-      reader.readAsDataURL(blob);
+const exPasteZone = document.getElementById('exercisePasteZone');
+
+// Xử lý sự kiện DÁN (Ctrl + V)
+exPasteZone.addEventListener('paste', function(e) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let item of items) {
+        if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
+            const blob = item.getAsFile();
+            displayExerciseImage(blob);
+        }
     }
-  }
 });
 
-// Hàm xóa để đưa bài mới lên
-function resetExercise(e) {
-  e.stopPropagation();
-  exerciseImg.src = '';
-  displayZone.style.display = 'none';
-  prompt.style.display = 'flex';
-  pasteArea.style.borderStyle = 'dashed';
-  pasteArea.focus();
+// Xử lý khi chọn file truyền thống
+function handleExFileSelect(input) {
+    if (input.files && input.files[0]) {
+        displayExerciseImage(input.files[0]);
+    }
 }
 
-// Giúp người dùng click vào là focus ngay để dán
-pasteArea.addEventListener('click', () => {
-  pasteArea.focus();
-});
-</script>
+// Hàm hiển thị bản xem trước
+function displayExerciseImage(file) {
+    currentExerciseFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('paste-img-render').src = e.target.result;
+        document.getElementById('pastePreview').style.display = 'block';
+        document.getElementById('paste-msg').style.display = 'none';
+        document.getElementById('exercisePasteZone').style.borderStyle = 'solid';
+    };
+    reader.readAsDataURL(file);
+}
 
-</body>
-</html>
+// Hàm xóa ảnh đã dán/chọn
+function clearExercisePaste(e) {
+    if (e) e.stopPropagation();
+    currentExerciseFile = null;
+    document.getElementById('exerciseFileInput').value = '';
+    document.getElementById('paste-img-render').src = '';
+    document.getElementById('pastePreview').style.display = 'none';
+    document.getElementById('paste-msg').style.display = 'block';
+    document.getElementById('exercisePasteZone').style.borderStyle = 'dashed';
+}
+
+// Cập nhật hàm Lưu bài tập (Submit) của bạn
+async function saveExercise() {
+    // Khi gửi dữ liệu, bạn sử dụng 'currentExerciseFile' 
+    // thay vì lấy trực tiếp từ input.files[0]
+    if (!currentExerciseFile) {
+        alert("Vui lòng đưa hình ảnh bài tập lên!");
+        return;
+    }
+    
+    // Logic fetch/POST dữ liệu của bạn...
+    console.log("Đang nộp file bài tập:", currentExerciseFile);
+}
+</script>
