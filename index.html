@@ -3,190 +3,142 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Kho Học Liệu - Chỉnh sửa dán ảnh</title>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+<title>Kho Học Liệu - Đã thêm tính năng dán ảnh</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
+/* ... (Giữ nguyên các biến root và style cũ của bạn) ... */
 :root{
-  --blue-deep:#071e3d;--blue-navy:#0a2540;--blue-mid:#1a4a8a;
-  --blue-bright:#2c7be5;--blue-light:#5b9cf6;--blue-pale:#dbeafe;
-  --blue-frost:#eff6ff;--white:#fff;--gray-soft:#f0f5ff;
-  --text-dark:#071e3d;--text-mid:#2d5282;--text-muted:#718096;
-  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;
-  --shadow-card:0 4px 24px rgba(44,123,229,.10);
-  --shadow-hover:0 8px 40px rgba(44,123,229,.18);
+  --blue-deep:#071e3d;--blue-bright:#2c7be5;--blue-pale:#dbeafe;--blue-frost:#eff6ff;
+  --text-muted:#718096;--danger:#ef4444;
 }
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Be Vietnam Pro',sans-serif}
-body{background-color:var(--gray-soft);color:var(--text-dark);line-height:1.6}
+body { font-family: 'Be Vietnam Pro', sans-serif; background: #f0f5ff; }
 
-/* Style cho khu vực dán ảnh */
-#paste-zone {
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  border: 2px dashed var(--blue-bright);
-  border-radius: 12px;
+/* CHỈNH SỬA KHU VỰC UPLOAD ĐỂ DÁN ĐƯỢC ẢNH */
+.upload-zone {
+  border: 2px dashed var(--blue-pale);
   background: var(--blue-frost);
-  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
   position: relative;
   cursor: pointer;
-  padding: 15px;
+  transition: all 0.3s;
+  outline: none; /* Quan trọng để nhận diện khi click vào */
 }
-#paste-zone:focus {
-  background: var(--blue-pale);
-  border-style: solid;
+
+/* Khi nhấn vào khung sẽ có viền đậm để biết là đang sẵn sàng dán */
+.upload-zone:focus-within {
+  border-color: var(--blue-bright);
+  background: #fff;
 }
-.preview-img-container {
-  text-align: center;
-  width: 100%;
-}
+
 #img-preview {
   max-width: 100%;
   max-height: 250px;
+  display: none;
+  margin: 10px auto;
   border-radius: 8px;
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--blue-pale);
 }
+
 .btn-remove {
-  margin-top: 10px;
-  padding: 5px 15px;
+  display: none;
   background: var(--danger);
   color: white;
   border: none;
+  padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
+  margin: 5px auto;
 }
-/* Các style modal cơ bản */
-.mo { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-.mo.show { display: flex; }
-.md { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; }
-.btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-pri { background: var(--blue-bright); color: white; }
-.btn-sec { background: var(--blue-pale); color: var(--blue-mid); margin-right: 10px; }
 </style>
 </head>
 <body>
 
-<div style="padding: 50px; text-align: center;">
-    <h1>Hệ thống nộp bài trực tuyến</h1>
-    <p>Nhấn vào nút bên dưới để thử tính năng nộp bài mới</p>
-    <br>
-    <button class="btn btn-pri" onclick="openMo()">Mở Form Nộp Bài</button>
-</div>
-
-<div id="modalExercise" class="mo">
-  <div class="md">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-      <h2>Nộp bài tập</h2>
-      <button onclick="closeMo()" style="border:none; background:none; font-size: 1.5rem; cursor:pointer;">&times;</button>
-    </div>
+<div style="max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+  <h2 style="margin-bottom: 20px;">Nộp bài tập</h2>
+  
+  <div class="fg">
+    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Hình ảnh bài tập:</label>
     
-    <div class="fg">
-      <label style="display: block; margin-bottom: 8px; font-weight: 600;">Hình ảnh bài làm:</label>
+    <div class="upload-zone" id="drop-area">
+      <img id="img-preview" src="">
+      <button type="button" id="remove-btn" class="btn-remove" onclick="resetUpload(event)">Xóa ảnh</button>
       
-      <div id="paste-zone" tabindex="0">
-        <div id="paste-preview" style="display: none;" class="preview-img-container">
-          <img id="img-preview" src="">
-          <button type="button" onclick="clearPaste(event)" class="btn-remove">Xóa và chọn lại</button>
-        </div>
-        
-        <div id="paste-prompt">
-          <span style="font-size: 2rem;">📷</span>
-          <p style="margin-top: 10px;">Nhấn vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh</p>
-          <p style="font-size: 0.8rem; color: var(--text-muted);">Hoặc click để chọn file từ máy tính</p>
-        </div>
-        
-        <input type="file" id="exFileInput" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;" onchange="handleFileSelect(this)">
+      <div id="upload-prompt">
+        <span style="font-size: 2rem;">📋</span>
+        <p>Nhấp vào đây rồi nhấn <b>Ctrl + V</b> để dán ảnh</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">Hoặc chọn file từ máy tính</p>
       </div>
-    </div>
 
-    <div style="margin-top: 25px; text-align: right;">
-      <button class="btn btn-sec" onclick="closeMo()">Hủy</button>
-      <button class="btn btn-pri" id="btnSubmitEx" onclick="submitEx()">🚀 Nộp bài</button>
+      <input type="file" id="fileInput" accept="image/*" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
     </div>
   </div>
+
+  <button id="btnSubmit" style="width: 100%; margin-top: 20px; padding: 12px; background: var(--blue-bright); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+    🚀 Nộp bài
+  </button>
 </div>
 
 <script>
-let currentFile = null;
+const fileInput = document.getElementById('fileInput');
+const imgPreview = document.getElementById('img-preview');
+const uploadPrompt = document.getElementById('upload-prompt');
+const removeBtn = document.getElementById('remove-btn');
+let fileToUpload = null;
 
-function openMo() {
-  document.getElementById('modalExercise').classList.add('show');
-}
+// 1. Xử lý khi chọn file bằng cách nhấn vào khung
+fileInput.addEventListener('change', function() {
+  if (this.files && this.files[0]) {
+    handleFile(this.files[0]);
+  }
+});
 
-function closeMo() {
-  document.getElementById('modalExercise').classList.remove('show');
-  clearPaste();
-}
-
-// 1. Xử lý sự kiện dán (Paste)
-const pasteZone = document.getElementById('paste-zone');
-pasteZone.addEventListener('paste', function (e) {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  for (let index in items) {
-    const item = items[index];
-    if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
-      const blob = item.getAsFile();
-      renderPreview(blob);
+// 2. Xử lý khi DÁN (PASTE) ảnh
+document.addEventListener('paste', function (e) {
+  // Chỉ dán khi người dùng đang focus vào vùng upload
+  if (document.activeElement.id === 'drop-area' || document.activeElement === fileInput) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let item of items) {
+      if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
+        const blob = item.getAsFile();
+        handleFile(blob);
+      }
     }
   }
 });
 
-// 2. Xử lý khi chọn file truyền thống
-function handleFileSelect(input) {
-  if (input.files && input.files[0]) {
-    renderPreview(input.files[0]);
-  }
-}
-
-// 3. Hiển thị ảnh xem trước
-function renderPreview(file) {
+function handleFile(file) {
+  fileToUpload = file;
   const reader = new FileReader();
-  reader.onload = function (e) {
-    document.getElementById('img-preview').src = e.target.result;
-    document.getElementById('paste-preview').style.display = 'block';
-    document.getElementById('paste-prompt').style.display = 'none';
-    currentFile = file;
-  };
+  reader.onload = function(e) {
+    imgPreview.src = e.target.result;
+    imgPreview.style.display = 'block';
+    removeBtn.style.display = 'block';
+    uploadPrompt.style.display = 'none';
+  }
   reader.readAsDataURL(file);
 }
 
-// 4. Xóa ảnh
-function clearPaste(e) {
-  if (e) e.stopPropagation();
-  currentFile = null;
-  document.getElementById('img-preview').src = "";
-  document.getElementById('paste-preview').style.display = 'none';
-  document.getElementById('paste-prompt').style.display = 'block';
-  document.getElementById('exFileInput').value = "";
+function resetUpload(e) {
+  e.stopPropagation();
+  fileToUpload = null;
+  fileInput.value = '';
+  imgPreview.src = '';
+  imgPreview.style.display = 'none';
+  removeBtn.style.display = 'none';
+  uploadPrompt.style.display = 'block';
 }
 
-// 5. Gửi dữ liệu (Submit)
-async function submitEx() {
-  if (!currentFile) {
-    alert("Vui lòng dán hoặc chọn một hình ảnh trước khi nộp!");
+// 3. Xử lý nút nộp bài
+document.getElementById('btnSubmit').onclick = function() {
+  if (!fileToUpload) {
+    alert("Vui lòng dán hoặc chọn ảnh trước!");
     return;
   }
-
-  const btn = document.getElementById('btnSubmitEx');
-  btn.disabled = true;
-  btn.innerHTML = 'Đang tải lên...';
-
-  // Giả lập gửi FormData
-  const formData = new FormData();
-  formData.append('file', currentFile, 'bai_tap.png');
-
-  console.log("Đã sẵn sàng gửi file:", currentFile.name);
-  
-  // Demo thành công
-  setTimeout(() => {
-    alert("Nộp bài thành công!");
-    btn.disabled = false;
-    btn.innerHTML = '🚀 Nộp bài';
-    closeMo();
-  }, 1500);
-}
+  alert("Đã nhận file: " + (fileToUpload.name || "Pasted_Image.png") + "\nSẵn sàng gửi lên server!");
+};
 </script>
+
 </body>
 </html>
