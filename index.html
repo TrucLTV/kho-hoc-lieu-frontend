@@ -2153,58 +2153,26 @@ async function exSubmit(itemId, itemTitle) {
   }
 
   try {
-    // Thử nộp qua judge API trước (nếu có problem_id)
-    let judged = false;
-    try {
-      const probs = await apiFetch(`/api/problems?item_id=${itemId}`);
-      if (Array.isArray(probs) && probs.length > 0) {
-        const result = await apiFetch('/api/submissions', {
-          method: 'POST',
-          body: JSON.stringify({ problem_id: probs[0].id, language: lang, source_code: code })
-        });
-        exShowResult(itemId, result);
-        judged = true;
-      }
-    } catch(e) { /* không có judge, tiếp tục */ }
+    console.log('[KHL] Nộp bài:', itemTitle, lang, code.length, 'chars');
 
-    if (!judged) {
-      // Lưu bài nộp đơn giản qua endpoint /simple
-      let saved = false;
-      try {
-        await apiFetch('/api/submissions/simple', {
-          method: 'POST',
-          body: JSON.stringify({
-            item_id:     itemId,
-            item_title:  itemTitle,
-            source_code: code,
-            language:    lang
-          })
-        });
-        saved = true;
-      } catch(e) {
-        console.warn('[KHL] /api/submissions/simple failed:', e);
-        // Fallback: thử /api/scores
-        try {
-          await apiFetch('/api/scores', {
-            method: 'POST',
-            body: JSON.stringify({
-              lesson_id:    itemId,
-              lesson_title: itemTitle,
-              score: 0, correct: 0, total: 0,
-              note: `[CODE-${lang.toUpperCase()}]\n${code.slice(0,2000)}`
-            })
-          });
-          saved = true;
-        } catch(e2) { console.warn('[KHL] fallback /api/scores failed:', e2); }
-      }
+    // Nộp qua /api/submissions/simple
+    const result = await apiFetch('/api/submissions/simple', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_id:     itemId,
+        item_title:  itemTitle,
+        source_code: code,
+        language:    lang
+      })
+    });
 
-      if (resBox) {
-        resBox.className = 'ex-result-box verdict-ac';
-        resBox.style.display = 'block';
-        document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
-        document.getElementById('exresult-sub-' + itemId).textContent =
-          saved ? 'Giáo viên đã nhận bài và sẽ chấm điểm sớm.' : 'Đã lưu tạm – giáo viên sẽ xem sau.';
-      }
+    console.log('[KHL] Nộp thành công:', result);
+
+    if (resBox) {
+      resBox.className = 'ex-result-box verdict-ac';
+      resBox.style.display = 'block';
+      document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
+      document.getElementById('exresult-sub-' + itemId).textContent = 'Giáo viên đã nhận bài và sẽ chấm điểm sớm.';
     }
 
     _submittedItems.add(itemId);
