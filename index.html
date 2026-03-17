@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kho Học Liệu</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"/>
 <style>
 :root{
   --blue-deep:#071e3d;--blue-navy:#0a2540;--blue-mid:#1a4a8a;
@@ -353,6 +355,51 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
 .sl-add-row input{flex:1;padding:9px 12px;border:2px solid var(--blue-pale);border-radius:9px;font-family:inherit;font-size:.83rem;outline:none;transition:border-color .2s;}
 .sl-add-row input:focus{border-color:var(--blue-bright);}
 .sl-add-row button{padding:9px 14px;border:none;border-radius:9px;background:var(--blue-bright);color:white;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;}
+
+/* ── INLINE EXERCISE PANEL ── */
+.ex-inline-panel{display:none;border-top:2px solid var(--blue-pale);background:white;animation:fadeSlide .22s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.ex-inline-panel.open{display:block;}
+.ex-panel-inner{padding:16px 18px 18px;}
+.ex-panel-label{font-size:.7rem;font-weight:800;color:var(--text-mid);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px;}
+.ex-panel-desc{font-size:.85rem;color:var(--text-dark);line-height:1.65;margin:0 0 14px;background:var(--blue-frost);border:1.5px solid var(--blue-pale);border-radius:9px;padding:11px 14px;white-space:pre-wrap;}
+.ex-lang-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.ex-lang-sel{padding:7px 10px;border:2px solid var(--blue-pale);border-radius:9px;font-family:inherit;font-size:.81rem;font-weight:600;color:var(--text-dark);background:white;outline:none;cursor:pointer;}
+.ex-lang-sel:focus{border-color:var(--blue-bright);}
+.ex-btn-row{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
+.ex-btn-run{padding:8px 16px;background:var(--blue-bright);color:white;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.ex-btn-run:hover{background:var(--blue-mid);}
+.ex-btn-submit{padding:8px 16px;background:var(--success);color:white;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.ex-btn-submit:hover{background:#059669;}
+.ex-btn-submit:disabled{opacity:.55;cursor:not-allowed;}
+.ex-btn-reset{padding:8px 12px;background:white;color:var(--text-mid);border:1.5px solid var(--blue-pale);border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;}
+.ex-btn-reset:hover{border-color:var(--blue-light);}
+.ex-btn-close{padding:8px 12px;background:white;color:var(--text-muted);border:1.5px solid var(--blue-pale);border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;margin-left:auto;}
+.ex-btn-close:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5;}
+.ex-output{display:none;margin-top:12px;background:#0d1b2a;border-radius:9px;padding:12px 14px;}
+.ex-output-lbl{font-size:.7rem;color:#4a6278;font-family:monospace;margin:0 0 5px;}
+.ex-output-txt{font-size:.82rem;color:#94a3b8;font-family:monospace;margin:0;white-space:pre-wrap;max-height:180px;overflow-y:auto;}
+.ex-output.has-error .ex-output-txt{color:#f87171;}
+.ex-result-box{display:none;margin-top:12px;border-radius:9px;padding:12px 14px;}
+.ex-result-box.verdict-ac{background:#d1fae5;border:1.5px solid #6ee7b7;}
+.ex-result-box.verdict-wa{background:#fee2e2;border:1.5px solid #fca5a5;}
+.ex-result-box.verdict-err{background:#fef2f2;border:1.5px solid #fca5a5;}
+.ex-result-box.verdict-judging{background:#ede9fe;border:1.5px solid #c4b5fd;}
+.ex-result-title{font-size:.88rem;font-weight:800;margin:0 0 4px;}
+.ex-result-box.verdict-ac .ex-result-title{color:#065f46;}
+.ex-result-box.verdict-wa .ex-result-title,.ex-result-box.verdict-err .ex-result-title{color:#991b1b;}
+.ex-result-box.verdict-judging .ex-result-title{color:#5b21b6;}
+.ex-result-sub{font-size:.78rem;opacity:.8;}
+.ex-tc-grid{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.ex-tc-btn{width:38px;height:38px;border-radius:8px;border:none;cursor:pointer;font-size:.72rem;font-weight:700;transition:all .15s;}
+.ex-tc-btn.pass{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;}
+.ex-tc-btn.fail{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;}
+.ex-submitted-badge{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;border-radius:8px;padding:2px 9px;font-size:.7rem;font-weight:800;}
+/* CodeMirror overrides inside inline panel */
+.ex-inline-panel .CodeMirror{height:280px;border-radius:9px;font-size:.82rem;border:2px solid var(--blue-pale);}
+.ex-inline-panel .CodeMirror-focused{border-color:var(--blue-bright);}
+.spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -746,6 +793,12 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
 <!-- TOAST -->
 <div class="toast t-ok" id="toast"><span id="toastMsg"></span></div>
 
+<!-- CodeMirror -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
 <script>
 /* ── AUTH ── */
 /* ══════════════════════════════════════════
@@ -977,19 +1030,59 @@ function render(){
         const dot=hasContent
           ?'<span style="font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;border-radius:6px;padding:2px 8px;">✓ Có nội dung</span>'+(hasIV?'<span class="iv-badge">🎬 Video TT</span>':'')
           :'<span style="font-size:.7rem;color:var(--text-muted);background:var(--blue-pale);border-radius:6px;padding:2px 8px;">Chưa có nội dung</span>';
-        const submitBtn=`<a class="lesson-upload-btn" href="submit.html?item_id=${it.id}&title=${encodeURIComponent(it.title)}" onclick="event.stopPropagation()" style="text-decoration:none;background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;padding:6px 13px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">💻 Nộp bài</a>`;
+        const isExercise = s.type === 'exercise';
+        const isSubmitted = _submittedItems.has(it.id);
+        const submitBadge = isSubmitted ? `<span class="ex-submitted-badge">✓ Đã nộp</span>` : '';
+        // Nút xem tài liệu/nội dung (mở modal cũ)
+        const hasFiles=(it.files&&it.files.length)||(it.ivFiles&&it.ivFiles.length);
+        const viewBtn = hasFiles ? `<button class="lesson-upload-btn" onclick="event.stopPropagation();openLessonView('${s.id}','${it.id}')" style="background:var(--blue-bright);color:white;border:none;padding:6px 11px;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">📎 Tài liệu</button>` : '';
+        // Nút nộp bài (chỉ hiện với loại exercise)
+        const submitBtn = isExercise ? `<button class="lesson-upload-btn" onclick="event.stopPropagation();toggleExPanel('${it.id}')" style="background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;padding:6px 13px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">💻 Làm bài</button>${submitBadge}` : viewBtn;
         const uploadBtn=isAdmin()?`<button class="lesson-upload-btn" onclick="event.stopPropagation();openEditItem('${s.id}','${it.id}')">✏️ Sửa</button>`:'';
         const delBtn=isAdmin()?`<button class="ib del" onclick="event.stopPropagation();delItem('${s.id}','${it.id}')" title="Xóa">🗑️</button>`:'';
-        iHTML+=`<div class="lesson-row" onclick="openLessonView('${s.id}','${it.id}')">
-          <div class="lr-num">${idx+1}</div>
-          <div class="lr-body">
-            <div class="lr-title">${esc(it.title)}</div>
-            <div class="lr-meta">${dot}${fileBadges?`<div class="i-files" style="margin-top:5px;">${fileBadges}</div>`:''}</div>
+        const descText = (it.desc||'').trim();
+        // Row click: exercise mở panel inline, còn lại mở modal xem nội dung
+        const rowClick = isExercise ? `toggleExPanel('${it.id}')` : `openLessonView('${s.id}','${it.id}')`;
+        iHTML+=`<div style="border-radius:11px;overflow:hidden;border:1.5px solid var(--blue-pale);margin-bottom:6px;box-shadow:0 1px 4px rgba(44,123,229,.06);" id="exwrap-${it.id}">
+          <div class="lesson-row" style="border-radius:0;border:none;" onclick="${rowClick}">
+            <div class="lr-num">${idx+1}</div>
+            <div class="lr-body">
+              <div class="lr-title">${esc(it.title)}</div>
+              <div class="lr-meta">${dot}${fileBadges?`<div class="i-files" style="margin-top:5px;">${fileBadges}</div>`:''}</div>
+            </div>
+            <div class="lr-actions" onclick="event.stopPropagation()">
+              ${isExercise ? submitBtn : (viewBtn + (isAdmin() ? uploadBtn + delBtn : ''))}
+              ${isExercise && isAdmin() ? uploadBtn + delBtn : ''}
+            </div>
           </div>
-          <div class="lr-actions" onclick="event.stopPropagation()">
-  ${submitBtn}${uploadBtn}${delBtn}
-</div>
-
+          ${isExercise ? `<div class="ex-inline-panel" id="expanel-${it.id}">
+            <div class="ex-panel-inner">
+              ${descText?`<p class="ex-panel-label">📋 Đề bài</p><div class="ex-panel-desc">${esc(descText)}</div>`:''}
+              ${hasFiles?`<div style="margin-bottom:12px;"><p class="ex-panel-label" style="margin-bottom:6px;">📎 Tài liệu đề bài</p><div style="display:flex;flex-wrap:wrap;gap:6px;">${fileBadges}</div></div>`:''}
+              <p class="ex-panel-label">✏️ Viết code</p>
+              <div class="ex-lang-bar">
+                <select class="ex-lang-sel" id="exlang-${it.id}" onchange="exChangeLang('${it.id}')">
+                  <option value="python">🐍 Python 3</option>
+                  <option value="javascript">🟨 JavaScript</option>
+                  <option value="c">🔵 C (gcc)</option>
+                  <option value="cpp">🔷 C++ 17</option>
+                </select>
+                <button class="ex-btn-reset" onclick="exResetCode('${it.id}')">🔄 Reset</button>
+              </div>
+              <textarea id="excode-${it.id}"></textarea>
+              <div class="ex-btn-row">
+                <button class="ex-btn-run" onclick="exRunCode('${it.id}')">▶ Chạy thử</button>
+                <button class="ex-btn-submit" id="exsubmit-${it.id}" onclick="exSubmit('${it.id}','${esc(it.title).replace(/'/g,"\\'")}')">🚀 Nộp bài</button>
+                <button class="ex-btn-close" onclick="toggleExPanel('${it.id}')">✕ Đóng</button>
+              </div>
+              <div class="ex-output" id="exout-${it.id}"><p class="ex-output-lbl">Output:</p><p class="ex-output-txt" id="exouttxt-${it.id}"></p></div>
+              <div class="ex-result-box" id="exresult-${it.id}">
+                <div class="ex-result-title" id="exresult-title-${it.id}"></div>
+                <div class="ex-result-sub" id="exresult-sub-${it.id}"></div>
+                <div class="ex-tc-grid" id="extc-${it.id}"></div>
+              </div>
+            </div>
+          </div>` : ''}
         </div>`;
       });
     }
@@ -1912,30 +2005,241 @@ window.addEventListener('message', async function(e) {
 
 
 
-/* ── Auto-login: kiểm tra token khi trang load ── */
-(async function initApp() {
-  const token = getToken();
-  if (!token) return; // không có token → ở lại trang đăng nhập
+/* ── INLINE EXERCISE PANEL ── */
+const _submittedItems = new Set();
+const _exEditors = {};  // itemId → CodeMirror instance
+
+const EX_TEMPLATES = {
+  python: `# Viết code Python tại đây
+# Đọc input: input()   In output: print()
+
+`,
+  javascript: `// Viết code JavaScript tại đây
+// In output: console.log()
+
+`,
+  c: `#include <stdio.h>
+
+int main() {
+    // Viết code C tại đây
+    return 0;
+}
+`,
+  cpp: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // Viết code C++ tại đây
+    return 0;
+}
+`
+};
+
+const EX_MODE_MAP = {
+  python: 'python',
+  javascript: 'javascript',
+  c: 'text/x-csrc',
+  cpp: 'text/x-c++src'
+};
+
+function toggleExPanel(itemId) {
+  const panel = document.getElementById('expanel-' + itemId);
+  const wrap  = document.getElementById('exwrap-' + itemId);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (wrap) {
+    wrap.style.borderColor = isOpen ? 'var(--blue-bright)' : 'var(--blue-pale)';
+    wrap.style.boxShadow   = isOpen ? '0 4px 20px rgba(44,123,229,.14)' : '0 1px 4px rgba(44,123,229,.06)';
+  }
+  if (isOpen) {
+    // Khởi tạo CodeMirror nếu chưa có
+    if (!_exEditors[itemId] && typeof CodeMirror !== 'undefined') {
+      const ta = document.getElementById('excode-' + itemId);
+      if (ta) {
+        const ed = CodeMirror.fromTextArea(ta, {
+          mode: 'python',
+          theme: 'dracula',
+          lineNumbers: true,
+          indentUnit: 4,
+          tabSize: 4,
+          indentWithTabs: false,
+          lineWrapping: false,
+          autoCloseBrackets: true,
+          matchBrackets: true,
+          extraKeys: { "Tab": cm => cm.execCommand("indentMore") }
+        });
+        ed.setValue(EX_TEMPLATES.python);
+        ed.setSize(null, 280);
+        _exEditors[itemId] = ed;
+      }
+    }
+    setTimeout(() => {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (_exEditors[itemId]) _exEditors[itemId].refresh();
+    }, 60);
+  }
+}
+
+function exChangeLang(itemId) {
+  const sel = document.getElementById('exlang-' + itemId);
+  if (!sel) return;
+  const lang = sel.value;
+  const ed = _exEditors[itemId];
+  if (ed) {
+    ed.setOption('mode', EX_MODE_MAP[lang] || 'python');
+    ed.setValue(EX_TEMPLATES[lang] || '');
+  }
+}
+
+function exResetCode(itemId) {
+  const sel = document.getElementById('exlang-' + itemId);
+  const lang = sel ? sel.value : 'python';
+  const ed = _exEditors[itemId];
+  if (ed) ed.setValue(EX_TEMPLATES[lang] || '');
+  const outBox = document.getElementById('exout-' + itemId);
+  const resBox = document.getElementById('exresult-' + itemId);
+  if (outBox) outBox.style.display = 'none';
+  if (resBox) resBox.style.display = 'none';
+}
+
+function exRunCode(itemId) {
+  const ed = _exEditors[itemId];
+  const outBox  = document.getElementById('exout-' + itemId);
+  const outText = document.getElementById('exouttxt-' + itemId);
+  if (!outBox || !outText) return;
+
+  // Chỉ chạy được JS trực tiếp; các ngôn ngữ khác cần backend
+  const sel = document.getElementById('exlang-' + itemId);
+  const lang = sel ? sel.value : 'python';
+
+  if (lang !== 'javascript') {
+    outBox.style.display = 'block';
+    outBox.classList.remove('has-error');
+    outText.style.color = '#94a3b8';
+    outText.textContent = `⚠️ Chạy thử chỉ hỗ trợ JavaScript trực tiếp.\nCác ngôn ngữ khác (${lang}) cần nộp lên server để chấm.`;
+    return;
+  }
+
+  const code = ed ? ed.getValue() : '';
+  outBox.style.display = 'block';
+  outBox.classList.remove('has-error');
+  let output = '';
+  const orig = console.log;
+  console.log = (...args) => { output += args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') + '\n'; };
+  try { eval(code); } catch (e) { output = 'Lỗi: ' + e.message; outBox.classList.add('has-error'); }
+  console.log = orig;
+  outText.textContent = output || '(không có output)';
+}
+
+async function exSubmit(itemId, itemTitle) {
+  const ed = _exEditors[itemId];
+  const code = ed ? ed.getValue().trim() : '';
+  if (!code) { toast('⚠️ Vui lòng viết code trước khi nộp!', 'err'); return; }
+
+  const sel = document.getElementById('exlang-' + itemId);
+  const lang = sel ? sel.value : 'python';
+  const btn = document.getElementById('exsubmit-' + itemId);
+  const resBox = document.getElementById('exresult-' + itemId);
+  const outBox = document.getElementById('exout-' + itemId);
+
+  if (outBox) outBox.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-sm"></span> Đang chấm...'; }
+
+  // Hiện trạng thái đang chấm
+  if (resBox) {
+    resBox.className = 'ex-result-box verdict-judging';
+    resBox.style.display = 'block';
+    document.getElementById('exresult-title-' + itemId).textContent = '⏳ Đang nộp bài...';
+    document.getElementById('exresult-sub-' + itemId).textContent = '';
+    document.getElementById('extc-' + itemId).innerHTML = '';
+  }
 
   try {
-    // Xác minh token còn hợp lệ
-    await apiFetch('/api/content');
-    // Token hợp lệ → decode và tự đăng nhập
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    role = payload.role;
-    _currentStudentName = payload.name;
-    loggedStudent = (payload.role === 'student')
-      ? { id: payload.id, name: payload.name, user: payload.username }
-      : null;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appScreen').style.display = 'block';
-    applyRole();
-    await loadDataFromAPI();
+    // Lấy problem_id từ API nếu có
+    let problem_id = null;
+    try {
+      const probRes = await apiFetch(`/api/problems?item_id=${itemId}`);
+      const probs = await probRes.json();
+      if (probs && probs.length > 0) problem_id = probs[0].id;
+    } catch(e) {}
+
+    if (problem_id) {
+      // Nộp qua judge API (submit.html flow)
+      const res = await apiFetch('/api/submissions', {
+        method: 'POST',
+        body: JSON.stringify({ problem_id, language: lang, source_code: code })
+      });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Lỗi server'); }
+      const result = await res.json();
+      exShowResult(itemId, result);
+    } else {
+      // Không có judge → lưu bài nộp đơn giản
+      await apiFetch('/api/submissions', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, item_title: itemTitle, code, language: lang, student_name: _currentStudentName || 'Học sinh' })
+      }).catch(() => {}); // bỏ qua lỗi nếu API chưa có
+      if (resBox) {
+        resBox.className = 'ex-result-box verdict-ac';
+        resBox.style.display = 'block';
+        document.getElementById('exresult-title-' + itemId).textContent = '✅ Nộp bài thành công!';
+        document.getElementById('exresult-sub-' + itemId).textContent = 'Giáo viên sẽ chấm điểm và phản hồi sớm.';
+      }
+    }
+
+    _submittedItems.add(itemId);
+    toast('✅ Đã nộp bài: ' + itemTitle);
+
+    // Thêm badge "Đã nộp"
+    const wrap = document.getElementById('exwrap-' + itemId);
+    if (wrap && !wrap.querySelector('.ex-submitted-badge')) {
+      const nopBtn = wrap.querySelector('.lesson-upload-btn');
+      if (nopBtn) {
+        const badge = document.createElement('span');
+        badge.className = 'ex-submitted-badge';
+        badge.textContent = '✓ Đã nộp';
+        nopBtn.after(badge);
+      }
+    }
   } catch(e) {
-    // Token hết hạn hoặc lỗi → xóa token, hiện trang đăng nhập
-    clearToken();
+    if (resBox) {
+      resBox.className = 'ex-result-box verdict-err';
+      resBox.style.display = 'block';
+      document.getElementById('exresult-title-' + itemId).textContent = '❌ Lỗi nộp bài';
+      document.getElementById('exresult-sub-' + itemId).textContent = e.message;
+    }
+    toast('❌ Lỗi: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Nộp bài'; }
   }
+}
+
+function exShowResult(itemId, data) {
+  const resBox = document.getElementById('exresult-' + itemId);
+  if (!resBox) return;
+  const verdictMap = {
+    accepted:    { cls:'verdict-ac',  ico:'✅', label:'Accepted – Chính xác!' },
+    wrong_answer:{ cls:'verdict-wa',  ico:'❌', label:'Wrong Answer – Sai kết quả' },
+    partial:     { cls:'verdict-wa',  ico:'⚠️', label:'Partial – Đúng một phần' },
+    error:       { cls:'verdict-err', ico:'🔴', label:'Runtime Error' },
+  };
+  const v = verdictMap[data.status] || { cls:'verdict-err', ico:'❓', label: data.status };
+  resBox.className = 'ex-result-box ' + v.cls;
+  resBox.style.display = 'block';
+  document.getElementById('exresult-title-' + itemId).textContent = v.ico + ' ' + v.label + `  ${data.score ?? ''}${data.score!=null?' / 100':''}`;
+  document.getElementById('exresult-sub-' + itemId).textContent = `${data.passed_tests||0}/${data.total_tests||0} testcase đúng`;
+  const tcGrid = document.getElementById('extc-' + itemId);
+  if (tcGrid && data.results) {
+    tcGrid.innerHTML = data.results.map((r,i) =>
+      `<button class="ex-tc-btn ${r.passed?'pass':'fail'}" title="TC #${i+1}">${r.passed?'✓':'✗'}</button>`
+    ).join('');
+  }
+}
+
+/* ── Xóa token cũ khi trang load, yêu cầu đăng nhập lại ── */
+(function initApp() {
+  clearToken();
 })();
+
 
 </script>
 </body>
