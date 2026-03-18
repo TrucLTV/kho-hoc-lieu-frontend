@@ -193,7 +193,15 @@ main{max-width:1100px;margin:auto;padding:30px 32px 60px;position:relative;z-ind
 .fb-vid{background:#ede9fe;color:#7c3aed;}.fb-vid:hover{background:#ddd6fe;}
 .fb-html{background:#d1fae5;color:#059669;}.fb-html:hover{background:#a7f3d0;}
 .fb-link{background:#dbeafe;color:#2563eb;}.fb-link:hover{background:#bfdbfe;}
+.fb-img{background:#fce7f3;color:#be185d;}.fb-img:hover{background:#fbcfe8;}
 .i-files{display:flex;flex-wrap:wrap;margin-top:5px;}
+/* ── IMAGE PASTE ZONE (admin) ── */
+.paste-zone{border:2.5px dashed #fbcfe8;border-radius:12px;padding:20px 16px;text-align:center;background:#fdf4ff;cursor:default;transition:all .2s;outline:none;}
+.paste-zone.drag{border-color:#ec4899;background:#fce7f3;}
+.paste-zone.has-img{padding:12px;border-color:#ec4899;background:#fce7f3;}
+.paste-zone img.pz-preview{max-width:100%;max-height:200px;border-radius:8px;display:block;margin:0 auto 6px;box-shadow:0 2px 12px rgba(236,72,153,.15);}
+.pz-remove{margin-top:6px;padding:5px 13px;background:white;border:1.5px solid #fbcfe8;border-radius:8px;font-family:inherit;font-size:.77rem;font-weight:700;color:#be185d;cursor:pointer;transition:all .15s;}
+.pz-remove:hover{background:#fee2e2;}
 /* ── STUDENT MANAGER ── */
 .stu-card{display:flex;align-items:center;gap:10px;background:white;border:1.5px solid var(--blue-pale);border-radius:10px;padding:10px 13px;margin-bottom:7px;}
 .stu-card.pending{border-color:#fde68a;background:#fffbeb;}
@@ -569,6 +577,7 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
         <div class="file-type-tabs">
           <button class="ft-tab active" id="ftab-upload" onclick="switchFTab('upload')">&#x2B06;&#xFE0F; Upload file</button>
           <button class="ft-tab" id="ftab-url" onclick="switchFTab('url')">&#x1F517; Link URL</button>
+          <button class="ft-tab" id="ftab-img" onclick="switchFTab('img')">&#x1F5BC;&#xFE0F; Dán ảnh</button>
         </div>
         <div id="panel-upload">
           <div class="upload-zone" id="uploadZone"
@@ -582,6 +591,30 @@ table.db-tbl td{padding:10px 14px;color:var(--text-dark);vertical-align:middle;}
             <p style="font-size:.82rem;color:var(--text-muted);font-weight:500;">Kéo thả hoặc <strong style="color:var(--blue-bright);">nhấn để chọn file</strong></p>
             <p style="font-size:.71rem;color:var(--text-muted);margin-top:4px;opacity:.75;">PDF &#xB7; PowerPoint (.ppt/.pptx) &#xB7; Video (.mp4/.webm) &#xB7; HTML</p>
           </div>
+        </div>
+        <div id="panel-img" style="display:none;">
+          <div class="paste-zone" id="adminPasteZone"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleAdminImgDrop(event)">
+            <div id="adminPasteHint">
+              <div style="font-size:2rem;margin-bottom:8px;">🖼️</div>
+              <p style="font-size:.84rem;font-weight:700;color:#be185d;">Nhấn <kbd style="background:#fce7f3;border:1px solid #fbcfe8;border-radius:4px;padding:1px 7px;font-size:.78rem;font-family:inherit;">Ctrl+V</kbd> để dán ảnh từ screenshot</p>
+              <p style="font-size:.72rem;color:#f472b6;margin-top:5px;">Hoặc kéo thả · PNG, JPG, GIF, WebP</p>
+              <div style="margin-top:12px;">
+                <label style="padding:7px 16px;background:#ec4899;color:white;border-radius:9px;font-size:.79rem;font-weight:700;cursor:pointer;display:inline-block;transition:background .15s;" onmouseover="this.style.background='#db2777'" onmouseout="this.style.background='#ec4899'">
+                  📁 Chọn file ảnh
+                  <input type="file" accept="image/*" style="display:none;" onchange="handleAdminImgFile(this.files[0]);this.value=''"/>
+                </label>
+              </div>
+            </div>
+            <div id="adminPastePreview" style="display:none;">
+              <img class="pz-preview" id="adminPasteImg" src="" alt="Ảnh đã dán"/>
+              <p style="font-size:.74rem;color:#be185d;font-weight:600;margin-top:4px;" id="adminPasteImgName"></p>
+              <button class="pz-remove" onclick="clearAdminPasteImg()">✕ Xóa ảnh này</button>
+            </div>
+          </div>
+          <p style="font-size:.71rem;color:var(--text-muted);margin-top:7px;">💡 Ảnh sẽ được lưu và hiển thị trong bài học / bài tập cho học sinh xem.</p>
         </div>
         <div id="panel-url" style="display:none;">
           <input type="text" class="fi" id="urlInput" placeholder="Dán link tài liệu (YouTube, Drive, PDF online...)" style="margin-bottom:8px;"/>
@@ -1212,6 +1245,7 @@ const FILE_TYPES={
   video:{ico:'🎬',cls:'fb-vid',label:'Video'},
   html:{ico:'🌐',cls:'fb-html',label:'HTML'},
   link:{ico:'🔗',cls:'fb-link',label:'Link'},
+  image:{ico:'🖼️',cls:'fb-img',label:'Ảnh'},
 };
 function getFileType(name,mime){
   const n=(name||'').toLowerCase(),m=(mime||'').toLowerCase();
@@ -1219,6 +1253,7 @@ function getFileType(name,mime){
   if(n.endsWith('.ppt')||n.endsWith('.pptx')||m.includes('powerpoint')||m.includes('presentation'))return'ppt';
   if(n.endsWith('.html')||n.endsWith('.htm')||m.includes('html'))return'html';
   if(/\.(mp4|webm|mov|avi|mkv|ogv)$/.test(n)||m.includes('video'))return'video';
+  if(/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/.test(n)||m.startsWith('image/'))return'image';
   return'link';
 }
 /* ── FILE STATE ── */
@@ -1231,6 +1266,8 @@ function switchFTab(t){
   document.getElementById('ftab-'+t).classList.add('active');
   document.getElementById('panel-upload').style.display=t==='upload'?'block':'none';
   document.getElementById('panel-url').style.display=t==='url'?'block':'none';
+  const pi=document.getElementById('panel-img');
+  if(pi) pi.style.display=t==='img'?'block':'none';
 }
 
 /* ── UPLOAD FILE LÊN SUPABASE STORAGE ── */
@@ -1367,6 +1404,74 @@ function renderIVList(){
   });
 }
 
+/* ══════════════════════════════════════
+   IMAGE PASTE – ADMIN modal
+══════════════════════════════════════ */
+let _adminPasteImg = null; // {dataUrl, name, size}
+
+function _applyAdminImg(dataUrl, name, size) {
+  _adminPasteImg = { dataUrl, name, size, type: 'image' };
+  document.getElementById('adminPasteImg').src = dataUrl;
+  document.getElementById('adminPasteImgName').textContent = name + ' · ' + (size/1024).toFixed(0) + ' KB';
+  document.getElementById('adminPasteHint').style.display  = 'none';
+  document.getElementById('adminPastePreview').style.display = 'block';
+  document.getElementById('adminPasteZone').classList.add('has-img');
+  toast('🖼️ Đã dán ảnh: ' + name.slice(0,30));
+}
+
+function clearAdminPasteImg() {
+  _adminPasteImg = null;
+  document.getElementById('adminPasteImg').src = '';
+  document.getElementById('adminPasteHint').style.display  = '';
+  document.getElementById('adminPastePreview').style.display = 'none';
+  document.getElementById('adminPasteZone').classList.remove('has-img');
+}
+
+function handleAdminImgFile(file) {
+  if (!file || !file.type.startsWith('image/')) { toast('⚠️ Vui lòng chọn file ảnh!','err'); return; }
+  const reader = new FileReader();
+  reader.onload = e => _applyAdminImg(e.target.result, file.name, file.size);
+  reader.readAsDataURL(file);
+}
+
+function handleAdminImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('adminPasteZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleAdminImgFile(file);
+  else toast('⚠️ Vui lòng thả file ảnh!','err');
+}
+
+/* Global Ctrl+V listener – chỉ kích hoạt khi panel-img đang hiện */
+document.addEventListener('paste', function(e) {
+  const panel = document.getElementById('panel-img');
+  if (!panel || panel.style.display === 'none') return; // chỉ xử lý khi tab "Dán ảnh" đang mở
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      const file = items[i].getAsFile();
+      if (file) {
+        const name = 'screenshot_' + Date.now() + '.png';
+        const namedFile = new File([file], name, { type: file.type });
+        handleAdminImgFile(namedFile);
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+});
+
+/* Thêm ảnh vào pendingFiles khi bấm Lưu (gọi trong saveItem) */
+function _flushAdminPasteImg() {
+  if (!_adminPasteImg) return;
+  pendingFiles.push({
+    id: uuid(), name: _adminPasteImg.name, size: _adminPasteImg.size,
+    type: 'image', dataUrl: _adminPasteImg.dataUrl, isUrl: false
+  });
+  clearAdminPasteImg();
+}
+
 /* ── RENDER LESSON ROW BADGES ── */
 function renderFileBadges(files, ivFiles){
   let html = '';
@@ -1448,6 +1553,16 @@ function _loadFileIntoViewer(file) {
     const v = document.createElement('video');
     v.src = raw; v.controls = true;
     body.appendChild(v);
+
+  } else if (file.type === 'image') {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:16px;background:#1a1a2e;';
+    const img = document.createElement('img');
+    img.src = raw;
+    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.4);';
+    img.alt = file.name;
+    wrap.appendChild(img);
+    body.appendChild(wrap);
 
   } else if (file.type === 'html' || file.type === 'iv') {
     const fr = document.createElement('iframe');
@@ -1637,6 +1752,7 @@ function openAddItem(sid){
   document.getElementById('urlLabel').value='';
   document.getElementById('ivUrlInput').value='';
   document.getElementById('ivUrlLabel').value='';
+  clearAdminPasteImg();
   switchFTab('upload');
   document.getElementById('moItem').classList.add('show');
 }
@@ -1704,6 +1820,7 @@ function openEditItem(sid,iid){
   document.getElementById('urlLabel').value='';
   document.getElementById('ivUrlInput').value='';
   document.getElementById('ivUrlLabel').value='';
+  clearAdminPasteImg();
   switchFTab('upload');
   renderPendingFiles();
   renderIVList();
@@ -1715,6 +1832,7 @@ function saveItem(){
   if(!title){toast('⚠️ Vui lòng nhập tiêu đề!','err');return;}
   const desc=document.getElementById('itDesc').value.trim();
   const s=data.find(x=>x.id===eItemSec);if(!s)return;
+  _flushAdminPasteImg(); // merge ảnh paste vào pendingFiles trước khi lưu
   const files=JSON.parse(JSON.stringify(pendingFiles));
   const ivFiles=JSON.parse(JSON.stringify(pendingIVFiles));
   if(eItem){
