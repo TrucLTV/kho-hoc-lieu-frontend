@@ -153,6 +153,8 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 </header>
 
 <main>
+  <!-- Debug banner – tự ẩn khi load xong -->
+  <div id="debugBanner" style="display:none;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:12px 18px;margin-bottom:18px;font-size:.82rem;color:#92400e;font-weight:600;"></div>
   <div class="tabs">
     <div class="tab active" onclick="setTab(this,'tabProblems')">💻 Bài tập</div>
     <div class="tab" onclick="setTab(this,'tabSubmissions')">📋 Bài nộp (Judge)</div>
@@ -462,18 +464,49 @@ let currentTestcases = [];
 async function loadContent() {
   try {
     const data = await apiFetch('/content');
+    console.log('[KHL] /content raw:', JSON.stringify(data).slice(0,600));
     allItems = [];
-    (data || []).forEach(sec => {
+    const rawSecs = Array.isArray(data) ? data : (data?.sections || data?.data || []);
+    rawSecs.forEach(sec => {
       (sec.items || []).forEach(item => {
-        allItems.push({ id: item.id, title: item.title, section: sec.name });
+        allItems.push({
+          id:      item.id,
+          title:   item.title,
+          section: sec.name,
+          type:    sec.type || 'lesson'
+        });
       });
     });
-    const opts = allItems.map(i => `<option value="${i.id}">${esc(i.section)} › ${esc(i.title)}</option>`).join('');
-    document.getElementById('itemFilter').innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
-    document.getElementById('probItemId').innerHTML = '<option value="">— Chọn mục —</option>' + opts;
-    populateSimpleSubItemFilter(); // đồng bộ dropdown "Bài nộp học sinh"
+    console.log('[KHL] allItems count:', allItems.length, allItems.slice(0,3));
+
+    const banner = document.getElementById('debugBanner');
+
+    if (!rawSecs.length) {
+      if (banner) { banner.style.display='block'; banner.innerHTML = '⚠️ API <code>/content</code> trả về mảng rỗng – Kho học liệu chưa có dữ liệu. Hãy đăng nhập vào trang chính và thêm bài học trước.'; }
+    } else if (!allItems.length) {
+      if (banner) { banner.style.display='block'; banner.innerHTML = `⚠️ Tìm thấy ${rawSecs.length} chương nhưng không có bài học nào bên trong. Hãy thêm bài học vào từng chương trên trang chính.`; }
+    } else {
+      if (banner) banner.style.display='none';
+    }
+
+    const opts = allItems.map(i =>
+      `<option value="${i.id}">${esc(i.section)} › ${esc(i.title)}</option>`
+    ).join('');
+    const emptyOpt = allItems.length ? '' : '<option value="" disabled>⚠️ Chưa có bài học – hãy thêm trên trang chính</option>';
+    document.getElementById('itemFilter').innerHTML  = '<option value="">— Tất cả bài tập —</option>' + opts + emptyOpt;
+    document.getElementById('probItemId').innerHTML  = '<option value="">— Chọn mục —</option>' + opts + emptyOpt;
+    populateSimpleSubItemFilter();
   } catch(e) {
-    console.error('loadContent:', e);
+    console.error('[KHL] loadContent error:', e);
+    const banner = document.getElementById('debugBanner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = `❌ Lỗi tải kho học liệu: <strong>${esc(e.error||e.message||String(e))}</strong><br>
+        <span style="font-weight:400">Có thể do: token hết hạn (thử đăng xuất/đăng nhập lại), hoặc lỗi kết nối server.</span>`;
+    }
+    const errOpt = `<option value="" disabled>❌ Lỗi: ${esc(e.error||e.message||'Kiểm tra console')}</option>`;
+    document.getElementById('itemFilter').innerHTML  = '<option value="">— Tất cả bài tập —</option>' + errOpt;
+    document.getElementById('probItemId').innerHTML  = '<option value="">— Chọn mục —</option>' + errOpt;
   }
 }
 
