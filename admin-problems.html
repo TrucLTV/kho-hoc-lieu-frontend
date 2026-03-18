@@ -136,25 +136,6 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 #ssSearchItem::placeholder{color:rgba(255,255,255,.5);}
 #ssSearchItem{color:white !important;}
 
-/* ── 2-col layout ── */
-.two-col{display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start;}
-@media(max-width:860px){.two-col{grid-template-columns:1fr;}}
-.item-list-panel{position:sticky;top:80px;}
-.ilist{max-height:calc(100vh - 280px);overflow-y:auto;}
-.ilist-sec-hdr{padding:6px 14px;font-size:.67rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);background:var(--blue-frost);border-bottom:1px solid var(--blue-pale);}
-.ilist-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--blue-pale);transition:background .15s;}
-.ilist-item:hover{background:var(--blue-frost);}
-.ilist-item.sel{background:var(--blue-pale);border-left:3px solid var(--blue-bright);}
-.ilist-item:last-child{border-bottom:none;}
-.ilist-title{font-size:.87rem;font-weight:700;color:var(--text-dark);}
-.ilist-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
-.itag{font-size:.67rem;font-weight:700;padding:2px 7px;border-radius:6px;}
-.itag-sub{background:#d1fae5;color:#065f46;}
-.itag-prob{background:#dbeafe;color:#1e40af;}
-.itag-none{background:var(--blue-pale);color:var(--text-muted);}
-#iSearch{width:100%;padding:8px 12px;border:2px solid var(--blue-pale);border-radius:9px;font-family:inherit;font-size:.82rem;outline:none;transition:border-color .2s;margin-bottom:0;}
-#iSearch:focus{border-color:var(--blue-bright);}
-
 </style>
 </head>
 <body>
@@ -183,39 +164,69 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 
   <!-- TAB: Bài tập -->
   <div id="tabProblems">
-    <div class="two-col">
 
-      <!-- Cột trái: danh sách bài từ kho học liệu -->
-      <div class="panel item-list-panel">
-        <div class="panel-hdr" style="flex-direction:column;gap:8px;align-items:stretch">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <h2>📚 Bài tập</h2>
-            <button class="btn btn-pri btn-sm" onclick="showCreateProbModal()">➕ Tạo</button>
-          </div>
-          <input id="iSearch" placeholder="🔍 Tìm bài tập..." oninput="buildItemList()"
-            style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:white;"/>
+    <!-- Dropdown chọn bài tập -->
+    <div class="panel">
+      <div class="panel-hdr" style="justify-content:space-between">
+        <h2>📁 Chọn bài tập từ kho học liệu</h2>
+        <button class="btn btn-pri btn-sm" onclick="showCreateProbModal()">➕ Tạo bài tập mới</button>
+      </div>
+      <div class="panel-body">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-lbl">Bài tập</label>
+          <select id="itemFilter" class="form-sel" onchange="onItemFilterChange()">
+            <option value="">— Chọn bài tập —</option>
+          </select>
         </div>
-        <div class="ilist" id="iList">
-          <div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>
+      </div>
+    </div>
+
+    <!-- Kết quả: bài nộp + judge -->
+    <div id="iDetailBody" style="display:none">
+
+      <!-- Bài nộp học sinh -->
+      <div class="panel">
+        <div class="panel-hdr" style="justify-content:space-between">
+          <h2>📥 Bài nộp học sinh</h2>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="iFilterStudent" class="form-sel"
+              style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white;font-size:.77rem;padding:5px 10px;border-radius:8px"
+              onchange="renderSubsTable()">
+              <option value="">— Tất cả học sinh —</option>
+            </select>
+            <button class="btn btn-sec btn-sm"
+              style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:white"
+              onclick="_refreshItemSubs()">🔄 Refresh</button>
+            <span id="iSubCount" style="font-size:.77rem;color:rgba(255,255,255,.75)"></span>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div style="overflow-x:auto">
+            <table class="sub-table">
+              <thead><tr><th>#</th><th>Học sinh</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian nộp</th></tr></thead>
+              <tbody id="iSubTableBody">
+                <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">Chọn bài tập ở trên để xem bài nộp</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Cột phải: chi tiết + bài nộp -->
-      <div id="iDetail">
-        <div class="panel">
-          <div class="panel-hdr"><h2 id="iDetailTitle">📋 Chọn một bài tập</h2></div>
-          <div class="panel-body" id="iDetailBody">
-            <div class="empty" style="padding:36px">
-              <div style="font-size:2.5rem;margin-bottom:10px">👈</div>
-              <p>Chọn một bài tập ở cột bên trái để xem bài nộp của học sinh</p>
-            </div>
+      <!-- Judge problems -->
+      <div class="panel">
+        <div class="panel-hdr" style="justify-content:space-between">
+          <h2>💻 Bài tập Judge (chấm tự động)</h2>
+          <button class="btn btn-pri btn-sm" onclick="_createProbForSelected()">➕ Thêm Judge</button>
+        </div>
+        <div class="panel-body">
+          <div id="iProbList">
+            <div class="empty"><div class="empty-ico">📭</div><p>Chưa có bài judge nào.</p></div>
           </div>
         </div>
       </div>
 
     </div>
-    <!-- compat selects -->
-    <select id="itemFilter" style="display:none"></select>
+
   </div>
 
   <!-- TAB: Bài nộp Judge -->
@@ -608,158 +619,134 @@ function copyItemId(itemId, title) {
 
 
 // ════════════════════════════════════════════════════
-// ITEM LIST – cột trái tab "Bài tập"
+// ITEM LIST – dropdown tab "Bài tập"
 // ════════════════════════════════════════════════════
-let _selItemId       = '';
-let _itemSubCount    = {};   // item_id → số bài nộp simple
-let _itemProbCount   = {};   // item_id → số problems
-let _cachedSimpleSubs = [];  // cache để không gọi API nhiều lần
+let _selItemId        = '';
+let _cachedSimpleSubs = [];
+let _itemSubCount     = {};
+let _itemProbCount    = {};
 
-// Build danh sách bài tập cột trái (gọi sau loadContent)
+// Gọi sau loadContent() – đổ items vào dropdown
 function buildItemList() {
-  const q  = (document.getElementById('iSearch')?.value || '').toLowerCase().trim();
-  const el = document.getElementById('iList');
-  if (!el) return;
-
+  const sel = document.getElementById('itemFilter');
+  if (!sel) return;
   if (!allItems.length) {
-    el.innerHTML = `<div class="empty" style="padding:24px;text-align:center">
-      <div style="font-size:2rem;margin-bottom:8px">📭</div>
-      <p style="font-size:.84rem;color:var(--text-muted)">Kho học liệu chưa có bài nào.<br>
-      <a href="index.html" style="color:var(--blue-bright);font-weight:700">← Về trang chính để thêm bài</a></p>
-    </div>`;
+    sel.innerHTML = '<option value="">⚠️ Kho học liệu chưa có bài nào – về trang chính để thêm</option>';
     return;
   }
-
   // Nhóm theo section
+  let html = '<option value="">— Chọn bài tập —</option>';
   const secs = {};
-  allItems.forEach(it => {
-    if (q && !it.title.toLowerCase().includes(q) && !it.section.toLowerCase().includes(q)) return;
-    (secs[it.section] = secs[it.section] || []).push(it);
-  });
-
-  if (!Object.keys(secs).length) {
-    el.innerHTML = '<div class="empty" style="padding:16px"><p>Không tìm thấy.</p></div>';
-    return;
-  }
-
-  let html = '';
+  allItems.forEach(it => (secs[it.section] = secs[it.section]||[]).push(it));
   Object.entries(secs).forEach(([sec, items]) => {
-    html += `<div class="ilist-sec-hdr">${esc(sec)}</div>`;
+    html += `<optgroup label="${esc(sec)}">`;
     items.forEach(it => {
-      const nSub  = _itemSubCount[it.id]  || 0;
-      const nProb = _itemProbCount[it.id] || 0;
-      const active = _selItemId === it.id ? ' sel' : '';
-      const subTag  = nSub  ? `<span class="itag itag-sub">📥 ${nSub} bài nộp</span>` : '';
-      const probTag = nProb ? `<span class="itag itag-prob">💻 ${nProb} judge</span>`   : '';
-      const noneTag = (!nSub && !nProb) ? `<span class="itag itag-none">Chưa có bài nộp</span>` : '';
-      html += `<div class="ilist-item${active}" onclick="selectItem('${it.id}')">
-        <div class="ilist-title">${esc(it.title)}</div>
-        <div class="ilist-tags">${subTag}${probTag}${noneTag}</div>
-      </div>`;
+      html += `<option value="${it.id}">${esc(it.title)}</option>`;
     });
+    html += `</optgroup>`;
   });
-  el.innerHTML = html;
+  sel.innerHTML = html;
+  // Giữ lại lựa chọn cũ nếu vẫn còn tồn tại
+  if (_selItemId) sel.value = _selItemId;
 }
 
-// Khi click vào 1 bài tập
-async function selectItem(itemId) {
-  _selItemId = itemId;
-  buildItemList(); // update active state ngay
+// Khi chọn item từ dropdown
+async function onItemFilterChange() {
+  const itemId = document.getElementById('itemFilter').value;
+  _selItemId   = itemId;
 
-  const item = allItems.find(i => i.id === itemId);
-  if (!item) return;
+  const detail = document.getElementById('iDetailBody');
+  if (!itemId) {
+    detail.style.display = 'none';
+    return;
+  }
 
-  document.getElementById('iDetailTitle').innerHTML =
-    `📋 <span style="opacity:.65;font-weight:500;font-size:.85rem">${esc(item.section)} ›</span> ${esc(item.title)}`;
+  detail.style.display = 'block';
 
-  const body = document.getElementById('iDetailBody');
-  body.innerHTML = `<div class="empty"><div class="empty-ico">⏳</div><p>Đang tải bài nộp...</p></div>`;
+  // Reset UI
+  document.getElementById('iSubTableBody').innerHTML =
+    `<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-muted)">⏳ Đang tải bài nộp...</td></tr>`;
+  document.getElementById('iProbList').innerHTML =
+    `<div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>`;
 
-  // Load simple subs cho item này
-  let subs = [];
+  // Load song song
+  await Promise.all([_loadSubsForItem(itemId), _loadProbsForItem(itemId)]);
+}
+
+async function _loadSubsForItem(itemId) {
   try {
     if (!_cachedSimpleSubs.length) {
       _cachedSimpleSubs = await apiFetch('/submissions/simple') || [];
-      // Tính count cho tất cả items
-      _itemSubCount = {};
-      _cachedSimpleSubs.forEach(s => {
-        const key = s.item_id || '';
-        if (key) _itemSubCount[key] = (_itemSubCount[key]||0) + 1;
-        // fallback by title
-        allItems.forEach(it => {
-          if (s.item_title === it.title) _itemSubCount[it.id] = (_itemSubCount[it.id]||0) + 1;
-        });
-      });
-      buildItemList(); // update badges
     }
-    subs = _cachedSimpleSubs.filter(s =>
-      s.item_id === itemId || (item && s.item_title === item.title)
-    ).sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
-  } catch(e) { console.warn('sub load:', e); }
+    const item = allItems.find(i => i.id === itemId);
+    const subs = _cachedSimpleSubs
+      .filter(s => s.item_id === itemId || (item && s.item_title === item.title))
+      .sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
 
-  // Load problems cho item này
-  let probs = [];
-  try {
-    probs = await apiFetch(`/problems?item_id=${itemId}`) || [];
-    _itemProbCount[itemId] = probs.length;
-    buildItemList(); // update badges
-  } catch(e) {}
+    // Populate student filter
+    const students = [...new Set(subs.map(s => s.student_name||'').filter(Boolean))].sort();
+    document.getElementById('iFilterStudent').innerHTML =
+      '<option value="">— Tất cả học sinh —</option>' +
+      students.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
-  // ── Render cột phải ──
-  let html = '';
-
-  // Phần 1: Bài nộp học sinh
-  html += `
-  <div style="margin-bottom:24px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <h3 style="font-size:.9rem;font-weight:800;color:var(--text-dark)">📥 Bài nộp học sinh</h3>
-      <span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:9px;font-size:.75rem;font-weight:700">${subs.length}</span>
-      <button class="btn btn-sec btn-sm" style="margin-left:auto" onclick="_refreshSubs('${itemId}')">🔄 Refresh</button>
-    </div>`;
-
-  if (!subs.length) {
-    html += `<div style="background:var(--blue-frost);border-radius:10px;padding:20px;text-align:center;color:var(--text-muted);font-size:.84rem">
-      📭 Học sinh chưa nộp bài này
-    </div>`;
-  } else {
-    html += `<div style="border:1.5px solid var(--blue-pale);border-radius:12px;overflow:hidden">
-      <table class="sub-table">
-        <thead><tr><th>#</th><th>Học sinh</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian</th></tr></thead>
-        <tbody>
-          ${subs.map((s,i) => `
-          <tr>
-            <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px">
-                <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.student_name||'?').charAt(0).toUpperCase()}</div>
-                <strong>${esc(s.student_name||'—')}</strong>
-              </div>
-            </td>
-            <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
-            <td>${s.source_code ? `<button class="btn btn-pri btn-sm" onclick="_viewCode(${i},'${itemId}')">👁 Xem code</button>` : '—'}</td>
-            <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">${s.submitted_at?new Date(s.submitted_at).toLocaleString('vi-VN'):'—'}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
+    // Store filtered subs in a data attr for renderSubsTable
+    window._currentSubs = subs;
+    renderSubsTable();
+  } catch(e) {
+    document.getElementById('iSubTableBody').innerHTML =
+      `<tr><td colspan="5" style="text-align:center;padding:24px;color:#dc2626">❌ Lỗi: ${esc(e.error||e.message||'')}</td></tr>`;
   }
-  html += `</div>`;
+}
 
-  // Phần 2: Judge problems
-  html += `
-  <div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <h3 style="font-size:.9rem;font-weight:800;color:var(--text-dark)">💻 Bài tập Judge (testcase tự động)</h3>
-      <span style="background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:9px;font-size:.75rem;font-weight:700">${probs.length}</span>
-      <button class="btn btn-pri btn-sm" style="margin-left:auto" onclick="_createProbForItem('${itemId}')">➕ Thêm</button>
-    </div>`;
+function renderSubsTable() {
+  const subs     = window._currentSubs || [];
+  const filterSt = document.getElementById('iFilterStudent').value;
+  const filtered = filterSt ? subs.filter(s => s.student_name === filterSt) : subs;
+  const tbody    = document.getElementById('iSubTableBody');
+  const countEl  = document.getElementById('iSubCount');
 
-  if (!probs.length) {
-    html += `<div style="background:var(--blue-frost);border-radius:10px;padding:16px;text-align:center;color:var(--text-muted);font-size:.84rem">
-      Chưa có bài judge. Nhấn <strong>➕ Thêm</strong> để cấu hình testcase tự động chấm.
-    </div>`;
-  } else {
-    html += `<div class="prob-list">${probs.map(p=>`
+  if (countEl) countEl.textContent = `${filtered.length} bài nộp`;
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty" style="padding:28px">
+      <div class="empty-ico">📭</div><p>Học sinh chưa nộp bài này.</p>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((s, i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${(s.student_name||'?').charAt(0).toUpperCase()}
+          </div>
+          <strong>${esc(s.student_name||'—')}</strong>
+        </div>
+      </td>
+      <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
+      <td>${s.source_code
+        ? `<button class="btn btn-pri btn-sm" onclick="_viewCode(${i})">👁 Xem code</button>`
+        : `<span style="color:var(--text-muted);font-size:.78rem">—</span>`}
+      </td>
+      <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">
+        ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
+      </td>
+    </tr>`).join('');
+}
+
+async function _loadProbsForItem(itemId) {
+  try {
+    const probs = await apiFetch(`/problems?item_id=${itemId}`) || [];
+    _itemProbCount[itemId] = probs.length;
+    const el = document.getElementById('iProbList');
+    if (!probs.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico">📭</div>
+        <p>Chưa có bài judge. Nhấn <strong>➕ Thêm Judge</strong> để thêm testcase tự động chấm.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="prob-list">${probs.map(p => `
       <div class="prob-item">
         <div style="flex:1">
           <h3>💻 ${esc(p.title)}</h3>
@@ -771,47 +758,48 @@ async function selectItem(itemId) {
           <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}','${esc(p.title).replace(/'/g,"\\'")}')">🗑</button>
         </div>
       </div>`).join('')}</div>`;
+  } catch(e) {
+    document.getElementById('iProbList').innerHTML =
+      `<div class="empty" style="color:#dc2626">❌ Lỗi tải judge: ${esc(e.error||e.message||'')}</div>`;
   }
-  html += `</div>`;
-
-  body.innerHTML = html;
 }
 
-async function _refreshSubs(itemId) {
-  _cachedSimpleSubs = []; // clear cache
-  await selectItem(itemId);
+async function _refreshItemSubs() {
+  _cachedSimpleSubs = [];
+  if (_selItemId) await _loadSubsForItem(_selItemId);
 }
 
-function _viewCode(subIdx, itemId) {
-  const item = allItems.find(i => i.id === itemId);
-  const subs = _cachedSimpleSubs.filter(s =>
-    s.item_id === itemId || (item && s.item_title === item.title)
-  ).sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
-  const s = subs[subIdx];
+function _viewCode(filteredIdx) {
+  const filterSt  = document.getElementById('iFilterStudent').value;
+  const subs      = window._currentSubs || [];
+  const filtered  = filterSt ? subs.filter(s => s.student_name === filterSt) : subs;
+  const s         = filtered[filteredIdx];
   if (!s) return;
+  const item      = allItems.find(i => i.id === _selItemId);
   document.getElementById('subDetailBody').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--blue-frost);border-radius:12px;margin-bottom:16px">
-      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:900;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.student_name||'?').charAt(0).toUpperCase()}</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:900;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${(s.student_name||'?').charAt(0).toUpperCase()}
+      </div>
       <div>
         <div style="font-weight:800;font-size:.98rem">${esc(s.student_name||'Ẩn danh')}</div>
         <div style="font-size:.77rem;color:var(--text-muted);margin-top:2px">📝 ${esc(item?.section||'')} › ${esc(item?.title||s.item_title||'')}</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap">
         <span style="background:var(--blue-pale);color:var(--blue-mid);padding:4px 11px;border-radius:8px;font-size:.77rem;font-weight:700">💻 ${esc(s.language||'—')}</span>
-        <span style="background:#f0fdf4;color:#065f46;padding:4px 11px;border-radius:8px;font-size:.77rem;font-weight:700">🕐 ${s.submitted_at?new Date(s.submitted_at).toLocaleString('vi-VN'):'—'}</span>
+        <span style="background:#f0fdf4;color:#065f46;padding:4px 11px;border-radius:8px;font-size:.77rem;font-weight:700">🕐 ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}</span>
       </div>
     </div>
     <div style="margin-bottom:8px;font-weight:700;font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Source Code</div>
-    <pre style="background:#0f172a;color:#e2e8f0;padding:18px;border-radius:12px;font-size:.85rem;line-height:1.7;overflow:auto;max-height:440px;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word">${esc(s.source_code||'(không có code)')}</pre>
-  `;
+    <pre style="background:#0f172a;color:#e2e8f0;padding:18px;border-radius:12px;font-size:.85rem;line-height:1.7;overflow:auto;max-height:440px;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word">${esc(s.source_code||'(không có code)')}</pre>`;
   openModal('modalSubDetail');
 }
 
-function _createProbForItem(itemId) {
+function _createProbForSelected() {
   showCreateProbModal();
   setTimeout(() => {
     const sel = document.getElementById('probItemId');
-    if (sel) sel.value = itemId;
+    if (sel && _selItemId) sel.value = _selItemId;
   }, 60);
 }
 
@@ -1072,7 +1060,7 @@ function setTab(el, tabId) {
   el.classList.add('active');
   document.querySelectorAll('main > div').forEach(d => d.style.display = 'none');
   document.getElementById(tabId).style.display = '';
-  if (tabId === 'tabProblems')    buildItemList();
+  if (tabId === 'tabProblems')    { buildItemList(); }
   if (tabId === 'tabSubmissions') loadSubmissions();
   if (tabId === 'tabSimpleSubs') {
     renderItemList();
