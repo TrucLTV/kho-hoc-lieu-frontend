@@ -119,6 +119,22 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 .item-sel-item:hover,.item-sel-item.sel{border-color:var(--blue-bright);background:var(--blue-frost);}
 .item-sel-item h4{font-size:.88rem;font-weight:700;}
 .item-sel-item .meta{font-size:.73rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── Simple Subs 2-col layout ── */
+@media(max-width:900px){
+  #tabSimpleSubs > div { grid-template-columns:1fr !important; }
+  #tabSimpleSubs .panel:first-child { position:static !important; }
+}
+.ss-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--blue-pale);transition:background .15s;display:flex;flex-direction:column;gap:3px;}
+.ss-item:last-child{border-bottom:none;}
+.ss-item:hover{background:var(--blue-frost);}
+.ss-item.active{background:var(--blue-pale);border-left:3px solid var(--blue-bright);}
+.ss-item-sec{font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.ss-item-title{font-size:.88rem;font-weight:700;color:var(--text-dark);}
+.ss-item-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px;background:#d1fae5;color:#065f46;margin-top:2px;}
+.ss-item-badge.zero{background:var(--blue-pale);color:var(--text-muted);}
+#ssSearchItem::placeholder{color:rgba(255,255,255,.5);}
+#ssSearchItem{color:white !important;}
 </style>
 </head>
 <body>
@@ -203,50 +219,57 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 
   <!-- TAB: Bài nộp học sinh (inline panel) -->
   <div id="tabSimpleSubs" style="display:none">
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start">
 
-    <!-- Bộ lọc -->
-    <div class="panel">
-      <div class="panel-hdr">
-        <h2>📁 Lọc bài nộp</h2>
-        <button class="btn btn-sec btn-sm" onclick="loadSimpleSubs()">🔄 Refresh</button>
-      </div>
-      <div class="panel-body">
-        <div class="form-row">
-          <div class="form-group" style="margin:0">
-            <label class="form-lbl">Chọn bài tập (từ kho học liệu)</label>
-            <select id="simpleSubFilterItem" class="form-sel" onchange="onSimpleItemChange()">
-              <option value="">— Tất cả bài tập —</option>
-            </select>
+      <!-- CỘT TRÁI: Danh sách bài tập từ kho học liệu -->
+      <div class="panel" style="position:sticky;top:80px">
+        <div class="panel-hdr" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <h2>📚 Bài tập</h2>
+            <button class="btn btn-sec btn-sm" onclick="loadSimpleSubs()" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:white">🔄</button>
           </div>
-          <div class="form-group" style="margin:0">
-            <label class="form-lbl">Lọc theo học sinh</label>
-            <select id="simpleSubFilterStudent" class="form-sel" onchange="renderSimpleSubs()">
-              <option value="">— Tất cả học sinh —</option>
-            </select>
+          <input id="ssSearchItem" class="form-inp" placeholder="🔍 Tìm bài tập..." oninput="renderItemList()"
+            style="width:100%;font-size:.8rem;padding:7px 11px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white;"/>
+        </div>
+        <div id="ssItemList" style="max-height:calc(100vh - 260px);overflow-y:auto">
+          <div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: Bài nộp của bài tập được chọn -->
+      <div>
+        <div class="panel">
+          <div class="panel-hdr" style="justify-content:space-between">
+            <h2 id="ssTableTitle">📥 Chọn một bài tập để xem bài nộp</h2>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select id="simpleSubFilterStudent" class="form-sel" onchange="renderSimpleSubs()"
+                style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white;font-size:.77rem;padding:5px 8px;border-radius:8px;">
+                <option value="">— Tất cả học sinh —</option>
+              </select>
+              <span id="simpleSubCount" style="font-size:.77rem;color:rgba(255,255,255,.7);white-space:nowrap"></span>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div style="overflow-x:auto">
+              <table class="sub-table">
+                <thead>
+                  <tr><th>#</th><th>Học sinh</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian nộp</th></tr>
+                </thead>
+                <tbody id="simpleSubTableBody">
+                  <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
+                    <div style="font-size:2rem;margin-bottom:8px">👈</div>
+                    Chọn một bài tập ở cột bên trái để xem bài nộp
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Bảng bài nộp -->
-    <div class="panel">
-      <div class="panel-hdr" style="justify-content:space-between">
-        <h2 id="ssTableTitle">📥 Tất cả bài nộp</h2>
-        <span id="simpleSubCount" style="font-size:.78rem;color:rgba(255,255,255,.75);font-weight:500;"></span>
-      </div>
-      <div class="panel-body" style="padding:0">
-        <div style="overflow-x:auto">
-          <table class="sub-table">
-            <thead>
-              <tr><th>#</th><th>Học sinh</th><th>Bài tập</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian</th></tr>
-            </thead>
-            <tbody id="simpleSubTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Nhấn 🔄 Refresh để tải danh sách bài nộp</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
+    <!-- hidden input để track item được chọn -->
+    <input type="hidden" id="simpleSubFilterItem" value=""/>
   </div>
 </main>
 
@@ -775,53 +798,108 @@ function setTab(el, tabId) {
   document.getElementById(tabId).style.display = '';
   if (tabId === 'tabSubmissions') loadSubmissions();
   if (tabId === 'tabSimpleSubs') {
+    renderItemList();
     if (!_allSimpleSubs.length) loadSimpleSubs();
-    else renderSimpleSubs();
+    else { renderItemList(); renderSimpleSubs(); }
   }
 }
 
 // ════════════════════════════════════════════════════
-// SIMPLE SUBMISSIONS – thống nhất với content tree
+// SIMPLE SUBMISSIONS – layout 2 cột
 // ════════════════════════════════════════════════════
-let _simpleSubs = [];
-let _allSimpleSubs = []; // cache toàn bộ, dùng khi lọc client-side
+let _allSimpleSubs = [];        // toàn bộ bài nộp từ server
+let _subCountByItem = {};       // { item_id: count }
+let _selectedItemId  = '';      // item đang chọn
 
-// Gọi sau khi loadContent() xong – đổ items vào dropdown
+// Gọi sau loadContent() để build left-panel
 function populateSimpleSubItemFilter() {
-  const sel = document.getElementById('simpleSubFilterItem');
-  if (!sel) return;
-  const opts = allItems.map(i =>
-    `<option value="${i.id}" data-title="${esc(i.title)}">${esc(i.section)} › ${esc(i.title)}</option>`
-  ).join('');
-  sel.innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
+  renderItemList();
 }
 
-// Khi giáo viên chọn item từ dropdown
-function onSimpleItemChange() {
-  renderSimpleSubs();
-  const sel   = document.getElementById('simpleSubFilterItem');
-  const title = sel.options[sel.selectedIndex]?.dataset?.title || '';
-  const hdr   = document.getElementById('ssTableTitle');
-  if (hdr) hdr.textContent = sel.value ? `📥 Bài nộp: ${title}` : '📥 Tất cả bài nộp';
+// Render danh sách bài tập ở cột trái
+function renderItemList() {
+  const q   = (document.getElementById('ssSearchItem')?.value || '').toLowerCase();
+  const el  = document.getElementById('ssItemList');
+  if (!el) return;
+
+  // Nhóm theo section
+  const sections = {};
+  allItems.forEach(item => {
+    if (q && !item.title.toLowerCase().includes(q) && !item.section.toLowerCase().includes(q)) return;
+    if (!sections[item.section]) sections[item.section] = [];
+    sections[item.section].push(item);
+  });
+
+  if (!Object.keys(sections).length) {
+    el.innerHTML = '<div class="empty" style="padding:20px"><p>Không tìm thấy bài tập nào.</p></div>';
+    return;
+  }
+
+  let html = '';
+  Object.entries(sections).forEach(([sec, items]) => {
+    html += `<div style="padding:8px 16px 4px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);background:var(--blue-frost);border-bottom:1px solid var(--blue-pale)">${esc(sec)}</div>`;
+    items.forEach(item => {
+      const cnt  = _subCountByItem[item.id] || 0;
+      const active = _selectedItemId === item.id ? ' active' : '';
+      const badge  = cnt > 0
+        ? `<span class="ss-item-badge">📥 ${cnt} bài nộp</span>`
+        : `<span class="ss-item-badge zero">Chưa có bài nộp</span>`;
+      html += `<div class="ss-item${active}" onclick="selectSSItem('${item.id}','${esc(item.section)}','${esc(item.title).replace(/'/g,"\\'")}')">
+        <div class="ss-item-title">${esc(item.title)}</div>
+        ${badge}
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
 }
 
+// Khi giáo viên click vào 1 bài tập
+function selectSSItem(itemId, section, title) {
+  _selectedItemId = itemId;
+  document.getElementById('simpleSubFilterItem').value = itemId;
+  const hdr = document.getElementById('ssTableTitle');
+  if (hdr) hdr.innerHTML = `📥 <span style="opacity:.7;font-weight:500;font-size:.85rem">${esc(section)} ›</span> ${esc(title)}`;
+  // Reset student filter
+  document.getElementById('simpleSubFilterStudent').value = '';
+  renderItemList();   // update active state
+  renderSimpleSubs(); // show submissions for this item
+}
+
+// Load tất cả bài nộp từ server
 async function loadSimpleSubs() {
-  const tbody = document.getElementById('simpleSubTableBody');
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
+  document.getElementById('ssItemList').innerHTML =
+    '<div class="empty" style="padding:20px"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>';
+  document.getElementById('simpleSubTableBody').innerHTML =
+    `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
   try {
     const data = await apiFetch('/submissions/simple');
     _allSimpleSubs = data || [];
-    _simpleSubs    = _allSimpleSubs;
 
-    // Populate bộ lọc học sinh
+    // Đếm bài nộp theo item
+    _subCountByItem = {};
+    _allSimpleSubs.forEach(s => {
+      const key = s.item_id || s.item_title || '';
+      if (key) _subCountByItem[key] = (_subCountByItem[key] || 0) + 1;
+    });
+    // fallback: đếm theo title nếu item_id không match
+    allItems.forEach(item => {
+      if (!_subCountByItem[item.id]) {
+        const byTitle = _allSimpleSubs.filter(s => s.item_title === item.title).length;
+        if (byTitle) _subCountByItem[item.id] = byTitle;
+      }
+    });
+
+    // Populate student filter
     const students = [...new Set(_allSimpleSubs.map(s => s.student_name || '').filter(Boolean))].sort();
     document.getElementById('simpleSubFilterStudent').innerHTML =
       '<option value="">— Tất cả học sinh —</option>' +
       students.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
+    renderItemList();
     renderSimpleSubs();
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:#dc2626">❌ Lỗi: ${esc(e.error||e.message||'Không tải được')}</td></tr>`;
+    document.getElementById('ssItemList').innerHTML =
+      `<div class="empty" style="padding:20px;color:#dc2626">❌ ${esc(e.error||e.message||'Lỗi tải dữ liệu')}</div>`;
   }
 }
 
@@ -830,96 +908,98 @@ function renderSimpleSubs() {
   const filterStudent = document.getElementById('simpleSubFilterStudent').value;
   const tbody         = document.getElementById('simpleSubTableBody');
 
+  // Nếu chưa chọn item và không lọc học sinh → chờ chọn
+  if (!filterItemId && !filterStudent) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
+      <div style="font-size:2rem;margin-bottom:8px">👈</div>
+      Chọn một bài tập ở cột bên trái để xem bài nộp
+    </td></tr>`;
+    document.getElementById('simpleSubCount').textContent = '';
+    return;
+  }
+
   let subs = _allSimpleSubs;
 
-  // Lọc theo item_id (ưu tiên) hoặc item_title (fallback cho bài nộp cũ)
   if (filterItemId) {
     const itemObj = allItems.find(i => i.id === filterItemId);
     subs = subs.filter(s => {
       if (s.item_id === filterItemId) return true;
-      if (itemObj && (s.item_title === itemObj.title)) return true;
+      if (itemObj && s.item_title === itemObj.title) return true;
       return false;
     });
   }
-  if (filterStudent) {
-    subs = subs.filter(s => (s.student_name||'') === filterStudent);
-  }
+  if (filterStudent) subs = subs.filter(s => (s.student_name||'') === filterStudent);
+
+  subs = [...subs].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
 
   const countEl = document.getElementById('simpleSubCount');
-  if (countEl) countEl.textContent = `${subs.length} bài nộp${filterItemId||filterStudent ? ' (đã lọc)' : ''}`;
+  if (countEl) countEl.textContent = `${subs.length} bài nộp`;
 
   if (!subs.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-ico">📭</div><p>${filterItemId ? 'Chưa có học sinh nào nộp bài này.' : 'Chưa có bài nộp nào.'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty" style="padding:32px">
+      <div class="empty-ico">📭</div>
+      <p>${filterItemId ? 'Học sinh chưa nộp bài này.' : 'Chưa có bài nộp nào.'}</p>
+    </div></td></tr>`;
     return;
   }
 
-  // Sắp xếp mới nhất trước
-  subs = [...subs].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
-
-  tbody.innerHTML = subs.map((s, i) => {
-    const itemLabel = (() => {
-      const obj = allItems.find(x => x.id === s.item_id);
-      if (obj) return `<span style="font-size:.68rem;color:var(--text-muted);display:block">${esc(obj.section)}</span><strong>${esc(obj.title)}</strong>`;
-      return `📝 ${esc(s.item_title || s.item_id || '—')}`;
-    })();
-    return `
+  tbody.innerHTML = subs.map((s, i) => `
     <tr>
       <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-bright);color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             ${(s.student_name||'?').charAt(0).toUpperCase()}
           </div>
           <strong>${esc(s.student_name||'—')}</strong>
         </div>
       </td>
-      <td style="max-width:200px">${itemLabel}</td>
-      <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
+      <td><code style="background:var(--blue-pale);padding:2px 8px;border-radius:6px;font-size:.76rem">${esc(s.language||'—')}</code></td>
       <td>
         ${s.source_code
-          ? `<button class="btn btn-pri btn-sm" onclick="viewSimpleCode('${esc(s.id)}')">👁 Xem code</button>`
-          : '<span style="color:var(--text-muted);font-size:.78rem">—</span>'
-        }
+          ? `<button class="btn btn-pri btn-sm" onclick="viewSimpleCode('${esc(s.id||'')}',${i})">👁 Xem code</button>`
+          : `<span style="color:var(--text-muted);font-size:.78rem">—</span>`}
       </td>
       <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">
         ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 
-async function viewSimpleCode(subId) {
-  // Tìm trong cache trước, nếu không có thì fetch
-  let s = _allSimpleSubs.find(x => x.id === subId);
-  if (!s) {
-    try { s = await apiFetch(`/submissions/simple/${subId}`); } catch(e) {
-      showToast('Lỗi tải bài nộp', 'err'); return;
-    }
+function viewSimpleCode(subId, fallbackIdx) {
+  // Tìm trong filtered list hoặc toàn bộ
+  const filterItemId  = document.getElementById('simpleSubFilterItem').value;
+  const filterStudent = document.getElementById('simpleSubFilterStudent').value;
+  let filtered = _allSimpleSubs;
+  if (filterItemId) {
+    const itemObj = allItems.find(i => i.id === filterItemId);
+    filtered = filtered.filter(s => s.item_id === filterItemId || (itemObj && s.item_title === itemObj.title));
   }
+  if (filterStudent) filtered = filtered.filter(s => s.student_name === filterStudent);
+  filtered = [...filtered].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
+
+  const s = subId ? (_allSimpleSubs.find(x => x.id === subId) || filtered[fallbackIdx]) : filtered[fallbackIdx];
   if (!s) return;
-  const itemObj  = allItems.find(x => x.id === s.item_id);
+
+  const itemObj  = allItems.find(x => x.id === s.item_id || x.title === s.item_title);
   const itemName = itemObj ? `${itemObj.section} › ${itemObj.title}` : (s.item_title || s.item_id || '');
-  const body = document.getElementById('subDetailBody');
-  body.innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
-      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+
+  document.getElementById('subDetailBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 16px;background:var(--blue-frost);border-radius:12px;">
+      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:900;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         ${(s.student_name||'?').charAt(0).toUpperCase()}
       </div>
       <div>
-        <div style="font-weight:800;font-size:.98rem">${esc(s.student_name||'Ẩn danh')}</div>
-        <div style="font-size:.78rem;color:var(--text-muted)">📝 ${esc(itemName)}</div>
+        <div style="font-weight:800;font-size:1rem">${esc(s.student_name||'Ẩn danh')}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">📝 ${esc(itemName)}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap">
+        <span style="background:var(--blue-pale);color:var(--blue-mid);padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">💻 ${esc(s.language||'—')}</span>
+        <span style="background:#f0fdf4;color:#065f46;padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">🕐 ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}</span>
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <span style="background:var(--blue-pale);color:var(--blue-mid);padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">
-        💻 ${esc(s.language||'—')}
-      </span>
-      <span style="background:#f0fdf4;color:#065f46;padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">
-        🕐 ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
-      </span>
-    </div>
-    <div style="margin-bottom:8px;font-weight:700;font-size:.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Source Code</div>
-    <pre style="background:#0f172a;color:#e2e8f0;padding:18px;border-radius:12px;font-size:.84rem;line-height:1.65;overflow-x:auto;max-height:400px;overflow-y:auto;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word">${esc(s.source_code||'(không có code)')}</pre>
+    <div style="margin-bottom:8px;font-weight:700;font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Source Code</div>
+    <pre style="background:#0f172a;color:#e2e8f0;padding:20px;border-radius:12px;font-size:.85rem;line-height:1.7;overflow:auto;max-height:440px;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word">${esc(s.source_code||'(không có code)')}</pre>
   `;
   openModal('modalSubDetail');
 }
