@@ -2237,7 +2237,7 @@ async function exSubmit(itemId, itemTitle) {
       console.log('[KHL] Lưu bài đơn giản:', itemTitle);
       await apiFetch('/api/submissions/simple', {
         method: 'POST',
-        body: JSON.stringify({ item_id: itemId, item_title: itemTitle, source_code: code, language: lang })
+        body: JSON.stringify({ item_id: itemId, item_title: itemTitle, source_code: code, language: lang, student_name: _currentStudentName || loggedStudent?.name || 'Ẩn danh' })
       });
       if (resBox) {
         resBox.className = 'ex-result-box verdict-ac';
