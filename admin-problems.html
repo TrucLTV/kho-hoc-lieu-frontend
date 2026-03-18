@@ -201,33 +201,50 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
     </div>
   </div>
 
-  <!-- TAB: Bài nộp đơn giản từ học sinh (inline panel) -->
+  <!-- TAB: Bài nộp học sinh (inline panel) -->
   <div id="tabSimpleSubs" style="display:none">
+
+    <!-- Bộ lọc -->
     <div class="panel">
       <div class="panel-hdr">
-        <h2>📥 Bài nộp từ học sinh</h2>
+        <h2>📁 Lọc bài nộp</h2>
         <button class="btn btn-sec btn-sm" onclick="loadSimpleSubs()">🔄 Refresh</button>
       </div>
       <div class="panel-body">
-        <div class="form-row" style="margin-bottom:16px">
-          <select id="simpleSubFilterItem" class="form-sel" onchange="renderSimpleSubs()">
-            <option value="">— Tất cả bài —</option>
-          </select>
-          <select id="simpleSubFilterStudent" class="form-sel" onchange="renderSimpleSubs()">
-            <option value="">— Tất cả học sinh —</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <label class="form-lbl">Chọn bài tập (từ kho học liệu)</label>
+            <select id="simpleSubFilterItem" class="form-sel" onchange="onSimpleItemChange()">
+              <option value="">— Tất cả bài tập —</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-lbl">Lọc theo học sinh</label>
+            <select id="simpleSubFilterStudent" class="form-sel" onchange="renderSimpleSubs()">
+              <option value="">— Tất cả học sinh —</option>
+            </select>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Bảng bài nộp -->
+    <div class="panel">
+      <div class="panel-hdr" style="justify-content:space-between">
+        <h2 id="ssTableTitle">📥 Tất cả bài nộp</h2>
+        <span id="simpleSubCount" style="font-size:.78rem;color:rgba(255,255,255,.75);font-weight:500;"></span>
+      </div>
+      <div class="panel-body" style="padding:0">
         <div style="overflow-x:auto">
           <table class="sub-table">
             <thead>
               <tr><th>#</th><th>Học sinh</th><th>Bài tập</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian</th></tr>
             </thead>
             <tbody id="simpleSubTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Nhấn Refresh để tải...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Nhấn 🔄 Refresh để tải danh sách bài nộp</td></tr>
             </tbody>
           </table>
         </div>
-        <div id="simpleSubCount" style="margin-top:10px;font-size:.78rem;color:var(--text-muted);"></div>
       </div>
     </div>
   </div>
@@ -404,6 +421,7 @@ const token = () => localStorage.getItem('khl_token');
 
 let allItems    = [];
 let allProblems = [];
+let _allSimpleSubs = [];
 let editingProbId = null;
 let currentTcProbId = null;
 let currentTestcases = [];
@@ -430,6 +448,7 @@ async function loadContent() {
     const opts = allItems.map(i => `<option value="${i.id}">${esc(i.section)} › ${esc(i.title)}</option>`).join('');
     document.getElementById('itemFilter').innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
     document.getElementById('probItemId').innerHTML = '<option value="">— Chọn mục —</option>' + opts;
+    populateSimpleSubItemFilter(); // đồng bộ dropdown "Bài nộp học sinh"
   } catch(e) {
     console.error('loadContent:', e);
   }
@@ -755,59 +774,95 @@ function setTab(el, tabId) {
   document.querySelectorAll('main > div').forEach(d => d.style.display = 'none');
   document.getElementById(tabId).style.display = '';
   if (tabId === 'tabSubmissions') loadSubmissions();
-  if (tabId === 'tabSimpleSubs') loadSimpleSubs();
+  if (tabId === 'tabSimpleSubs') {
+    if (!_allSimpleSubs.length) loadSimpleSubs();
+    else renderSimpleSubs();
+  }
 }
 
 // ════════════════════════════════════════════════════
-// SIMPLE SUBMISSIONS (từ inline panel học sinh)
+// SIMPLE SUBMISSIONS – thống nhất với content tree
 // ════════════════════════════════════════════════════
 let _simpleSubs = [];
+let _allSimpleSubs = []; // cache toàn bộ, dùng khi lọc client-side
+
+// Gọi sau khi loadContent() xong – đổ items vào dropdown
+function populateSimpleSubItemFilter() {
+  const sel = document.getElementById('simpleSubFilterItem');
+  if (!sel) return;
+  const opts = allItems.map(i =>
+    `<option value="${i.id}" data-title="${esc(i.title)}">${esc(i.section)} › ${esc(i.title)}</option>`
+  ).join('');
+  sel.innerHTML = '<option value="">— Tất cả bài tập —</option>' + opts;
+}
+
+// Khi giáo viên chọn item từ dropdown
+function onSimpleItemChange() {
+  renderSimpleSubs();
+  const sel   = document.getElementById('simpleSubFilterItem');
+  const title = sel.options[sel.selectedIndex]?.dataset?.title || '';
+  const hdr   = document.getElementById('ssTableTitle');
+  if (hdr) hdr.textContent = sel.value ? `📥 Bài nộp: ${title}` : '📥 Tất cả bài nộp';
+}
 
 async function loadSimpleSubs() {
   const tbody = document.getElementById('simpleSubTableBody');
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">⏳ Đang tải...</td></tr>`;
   try {
     const data = await apiFetch('/submissions/simple');
-    _simpleSubs = data || [];
+    _allSimpleSubs = data || [];
+    _simpleSubs    = _allSimpleSubs;
 
-    // Populate bộ lọc
-    const items    = [...new Set(_simpleSubs.map(s => s.item_title || s.item_id || '').filter(Boolean))];
-    const students = [...new Set(_simpleSubs.map(s => s.student_name || '').filter(Boolean))];
-
-    document.getElementById('simpleSubFilterItem').innerHTML =
-      '<option value="">— Tất cả bài —</option>' +
-      items.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join('');
-
+    // Populate bộ lọc học sinh
+    const students = [...new Set(_allSimpleSubs.map(s => s.student_name || '').filter(Boolean))].sort();
     document.getElementById('simpleSubFilterStudent').innerHTML =
       '<option value="">— Tất cả học sinh —</option>' +
       students.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
     renderSimpleSubs();
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626">❌ Lỗi: ${esc(e.error||e.message||'Không tải được')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:#dc2626">❌ Lỗi: ${esc(e.error||e.message||'Không tải được')}</td></tr>`;
   }
 }
 
 function renderSimpleSubs() {
-  const filterItem    = document.getElementById('simpleSubFilterItem').value;
+  const filterItemId  = document.getElementById('simpleSubFilterItem').value;
   const filterStudent = document.getElementById('simpleSubFilterStudent').value;
-  const tbody = document.getElementById('simpleSubTableBody');
+  const tbody         = document.getElementById('simpleSubTableBody');
 
-  let subs = _simpleSubs;
-  if (filterItem)    subs = subs.filter(s => (s.item_title||s.item_id||'') === filterItem);
-  if (filterStudent) subs = subs.filter(s => (s.student_name||'') === filterStudent);
+  let subs = _allSimpleSubs;
 
-  document.getElementById('simpleSubCount').textContent = `Hiển thị ${subs.length} / ${_simpleSubs.length} bài nộp`;
+  // Lọc theo item_id (ưu tiên) hoặc item_title (fallback cho bài nộp cũ)
+  if (filterItemId) {
+    const itemObj = allItems.find(i => i.id === filterItemId);
+    subs = subs.filter(s => {
+      if (s.item_id === filterItemId) return true;
+      if (itemObj && (s.item_title === itemObj.title)) return true;
+      return false;
+    });
+  }
+  if (filterStudent) {
+    subs = subs.filter(s => (s.student_name||'') === filterStudent);
+  }
+
+  const countEl = document.getElementById('simpleSubCount');
+  if (countEl) countEl.textContent = `${subs.length} bài nộp${filterItemId||filterStudent ? ' (đã lọc)' : ''}`;
 
   if (!subs.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-ico">📭</div><p>Chưa có bài nộp nào.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-ico">📭</div><p>${filterItemId ? 'Chưa có học sinh nào nộp bài này.' : 'Chưa có bài nộp nào.'}</p></div></td></tr>`;
     return;
   }
 
   // Sắp xếp mới nhất trước
   subs = [...subs].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
 
-  tbody.innerHTML = subs.map((s, i) => `
+  tbody.innerHTML = subs.map((s, i) => {
+    const itemLabel = (() => {
+      const obj = allItems.find(x => x.id === s.item_id);
+      if (obj) return `<span style="font-size:.68rem;color:var(--text-muted);display:block">${esc(obj.section)}</span><strong>${esc(obj.title)}</strong>`;
+      return `📝 ${esc(s.item_title || s.item_id || '—')}`;
+    })();
+    return `
     <tr>
       <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
       <td>
@@ -815,54 +870,58 @@ function renderSimpleSubs() {
           <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-bright);color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             ${(s.student_name||'?').charAt(0).toUpperCase()}
           </div>
-          <strong>${esc(s.student_name || '—')}</strong>
+          <strong>${esc(s.student_name||'—')}</strong>
         </div>
       </td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.item_title||'')}">
-        📝 ${esc(s.item_title || s.item_id || '—')}
-      </td>
+      <td style="max-width:200px">${itemLabel}</td>
       <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
       <td>
         ${s.source_code
-          ? `<button class="btn btn-sec btn-sm" onclick="viewSimpleCode(${i})">👁 Xem code</button>`
+          ? `<button class="btn btn-pri btn-sm" onclick="viewSimpleCode('${esc(s.id)}')">👁 Xem code</button>`
           : '<span style="color:var(--text-muted);font-size:.78rem">—</span>'
         }
       </td>
       <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">
         ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
-function viewSimpleCode(idx) {
-  const subs = (() => {
-    const fi = document.getElementById('simpleSubFilterItem').value;
-    const fs = document.getElementById('simpleSubFilterStudent').value;
-    let s = _simpleSubs;
-    if (fi) s = s.filter(x => (x.item_title||x.item_id||'') === fi);
-    if (fs) s = s.filter(x => (x.student_name||'') === fs);
-    return [...s].sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
-  })();
-  const s = subs[idx];
+async function viewSimpleCode(subId) {
+  // Tìm trong cache trước, nếu không có thì fetch
+  let s = _allSimpleSubs.find(x => x.id === subId);
+  if (!s) {
+    try { s = await apiFetch(`/submissions/simple/${subId}`); } catch(e) {
+      showToast('Lỗi tải bài nộp', 'err'); return;
+    }
+  }
   if (!s) return;
-  const win = window.open('', '_blank', 'width=750,height=650');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Bài nộp – ${esc(s.student_name||'')}</title>
-  <style>
-    body{font-family:'Segoe UI',sans-serif;background:#0d1b2a;color:#e2e8f0;margin:0;padding:0;}
-    .hdr{background:#071e3d;padding:16px 22px;border-bottom:2px solid #1a4a8a;}
-    .hdr h2{font-size:1rem;margin:0 0 4px;color:#5b9cf6;}
-    .hdr p{font-size:.78rem;color:#94a3b8;margin:0;}
-    pre{margin:0;padding:22px;font-family:'Courier New',monospace;font-size:.88rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;}
-  </style></head><body>
-  <div class="hdr">
-    <h2>👤 ${esc(s.student_name||'Ẩn danh')} — ${esc(s.item_title||'')}</h2>
-    <p>Ngôn ngữ: ${esc(s.language||'—')} &nbsp;·&nbsp; Nộp lúc: ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}</p>
-  </div>
-  <pre>${esc(s.source_code||'(không có code)')}</pre>
-  </body></html>`);
-  win.document.close();
+  const itemObj  = allItems.find(x => x.id === s.item_id);
+  const itemName = itemObj ? `${itemObj.section} › ${itemObj.title}` : (s.item_title || s.item_id || '');
+  const body = document.getElementById('subDetailBody');
+  body.innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:900;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${(s.student_name||'?').charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:.98rem">${esc(s.student_name||'Ẩn danh')}</div>
+        <div style="font-size:.78rem;color:var(--text-muted)">📝 ${esc(itemName)}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span style="background:var(--blue-pale);color:var(--blue-mid);padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">
+        💻 ${esc(s.language||'—')}
+      </span>
+      <span style="background:#f0fdf4;color:#065f46;padding:4px 11px;border-radius:8px;font-size:.78rem;font-weight:700">
+        🕐 ${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}
+      </span>
+    </div>
+    <div style="margin-bottom:8px;font-weight:700;font-size:.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Source Code</div>
+    <pre style="background:#0f172a;color:#e2e8f0;padding:18px;border-radius:12px;font-size:.84rem;line-height:1.65;overflow-x:auto;max-height:400px;overflow-y:auto;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word">${esc(s.source_code||'(không có code)')}</pre>
+  `;
+  openModal('modalSubDetail');
 }
 
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
