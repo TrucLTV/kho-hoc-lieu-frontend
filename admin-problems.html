@@ -135,6 +135,24 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 .ss-item-badge.zero{background:var(--blue-pale);color:var(--text-muted);}
 #ssSearchItem::placeholder{color:rgba(255,255,255,.5);}
 #ssSearchItem{color:white !important;}
+
+/* ── Prob 2-col layout ── */
+@media(max-width:900px){
+  #tabProblems > div:first-child { grid-template-columns:1fr !important; }
+}
+.prob-sel-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--blue-pale);transition:background .15s;display:flex;flex-direction:column;gap:3px;}
+.prob-sel-item:last-child{border-bottom:none;}
+.prob-sel-item:hover{background:var(--blue-frost);}
+.prob-sel-item.active{background:var(--blue-pale);border-left:3px solid var(--blue-bright);}
+.prob-sel-item-sec{font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.prob-sel-item-title{font-size:.88rem;font-weight:700;color:var(--text-dark);}
+.prob-sel-item-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px;}
+.prob-tag{display:inline-flex;align-items:center;gap:3px;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px;}
+.tag-has-prob{background:#dbeafe;color:#1e40af;}
+.tag-no-prob{background:var(--blue-pale);color:var(--text-muted);}
+.tag-has-sub{background:#d1fae5;color:#065f46;}
+#probSearchItem::placeholder{color:rgba(255,255,255,.5);}
+#probSearchItem{color:white !important;}
 </style>
 </head>
 <body>
@@ -163,26 +181,42 @@ main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-i
 
   <!-- TAB: Bài tập -->
   <div id="tabProblems">
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start">
 
-    <!-- Chọn item -->
-    <div class="panel">
-      <div class="panel-hdr">
-        <h2>📁 Chọn bài học / mục chứa bài tập</h2>
-        <button class="btn btn-pri btn-sm" onclick="showCreateProbModal()">➕ Tạo bài tập mới</button>
-      </div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-lbl">Lọc theo mục (item)</label>
-          <select id="itemFilter" class="form-sel" onchange="loadProblems()">
-            <option value="">— Tất cả bài tập —</option>
-          </select>
+      <!-- Cột trái: danh sách bài tập từ kho học liệu -->
+      <div class="panel" style="position:sticky;top:80px">
+        <div class="panel-hdr" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <h2>📚 Bài tập</h2>
+            <button class="btn btn-pri btn-sm" onclick="showCreateProbModal()">➕ Tạo</button>
+          </div>
+          <input id="probSearchItem" class="form-inp" placeholder="🔍 Tìm bài tập..."
+            oninput="renderProbItemList()"
+            style="width:100%;font-size:.8rem;padding:7px 11px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white;"/>
         </div>
-        <div id="problemList" class="prob-list">
+        <div id="probItemList" style="max-height:calc(100vh - 260px);overflow-y:auto">
           <div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>
         </div>
       </div>
-    </div>
 
+      <!-- Cột phải: chi tiết bài tập được chọn + bài nộp -->
+      <div id="probDetailCol">
+        <div class="panel">
+          <div class="panel-hdr">
+            <h2 id="probDetailTitle">📋 Chọn một bài tập để xem</h2>
+          </div>
+          <div class="panel-body" id="probDetailBody">
+            <div class="empty" style="padding:40px">
+              <div style="font-size:2rem;margin-bottom:8px">👈</div>
+              <p>Chọn một bài tập ở cột bên trái</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- hidden selects kept for compat -->
+    <select id="itemFilter" style="display:none" onchange="loadProblems()"></select>
   </div>
 
   <!-- TAB: Bài nộp Judge -->
@@ -496,6 +530,7 @@ async function loadContent() {
     document.getElementById('itemFilter').innerHTML  = '<option value="">— Tất cả bài tập —</option>' + opts + emptyOpt;
     document.getElementById('probItemId').innerHTML  = '<option value="">— Chọn mục —</option>' + opts + emptyOpt;
     populateSimpleSubItemFilter();
+    renderProbItemList();
   } catch(e) {
     console.error('[KHL] loadContent error:', e);
     const banner = document.getElementById('debugBanner');
@@ -570,6 +605,183 @@ function copyItemId(itemId, title) {
   }).catch(() => {
     prompt('Copy item_id này:', itemId);
   });
+}
+
+// ════════════════════════════════════════════════════
+// PROB ITEM LIST – cột trái tab "Bài tập"
+// ════════════════════════════════════════════════════
+let _selectedProbItemId = '';
+let _probCountByItem    = {};  // item_id → số problems đã tạo
+let _subCountByItemProb = {};  // item_id → số bài nộp simple
+
+function renderProbItemList() {
+  const q  = (document.getElementById('probSearchItem')?.value || '').toLowerCase();
+  const el = document.getElementById('probItemList');
+  if (!el) return;
+
+  const sections = {};
+  allItems.forEach(item => {
+    if (q && !item.title.toLowerCase().includes(q) && !item.section.toLowerCase().includes(q)) return;
+    // Chỉ hiện items thuộc section loại exercise hoặc tất cả
+    if (!sections[item.section]) sections[item.section] = [];
+    sections[item.section].push(item);
+  });
+
+  if (!Object.keys(sections).length) {
+    el.innerHTML = allItems.length
+      ? '<div class="empty" style="padding:20px"><p>Không tìm thấy.</p></div>'
+      : '<div class="empty" style="padding:20px"><div class="empty-ico">📭</div><p>Kho học liệu chưa có bài nào.<br><a href="index.html" style="color:var(--blue-bright)">← Về trang chính để thêm bài</a></p></div>';
+    return;
+  }
+
+  let html = '';
+  Object.entries(sections).forEach(([sec, items]) => {
+    html += `<div style="padding:7px 16px 4px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);background:var(--blue-frost);border-bottom:1px solid var(--blue-pale)">${esc(sec)}</div>`;
+    items.forEach(item => {
+      const active   = _selectedProbItemId === item.id ? ' active' : '';
+      const nProbs   = _probCountByItem[item.id] || 0;
+      const nSubs    = _subCountByItemProb[item.id] || 0;
+      const probTag  = nProbs
+        ? `<span class="prob-tag tag-has-prob">💻 ${nProbs} bài judge</span>`
+        : `<span class="prob-tag tag-no-prob">Chưa có judge</span>`;
+      const subTag   = nSubs ? `<span class="prob-tag tag-has-sub">📥 ${nSubs} bài nộp</span>` : '';
+      html += `<div class="prob-sel-item${active}" onclick="selectProbItem('${item.id}','${esc(item.section).replace(/'/g,"\\'")}','${esc(item.title).replace(/'/g,"\\'")}')">
+        <div class="prob-sel-item-title">${esc(item.title)}</div>
+        <div class="prob-sel-item-meta">${probTag}${subTag}</div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+async function selectProbItem(itemId, section, title) {
+  _selectedProbItemId = itemId;
+  renderProbItemList(); // update active state
+
+  // Update cột phải
+  document.getElementById('probDetailTitle').innerHTML =
+    `📋 <span style="opacity:.7;font-weight:500;font-size:.85rem">${esc(section)} ›</span> ${esc(title)}`;
+
+  const body = document.getElementById('probDetailBody');
+  body.innerHTML = `<div class="empty"><div class="empty-ico">⏳</div><p>Đang tải...</p></div>`;
+
+  // Load problems gắn với item này
+  let problems = [];
+  try {
+    const data = await apiFetch(`/problems?item_id=${itemId}`);
+    const item = allItems.find(i => i.id === itemId);
+    problems = (data || []).map(p => ({ ...p, _itemTitle: item?.title||'', _section: item?.section||'' }));
+    _probCountByItem[itemId] = problems.length;
+  } catch(e) { console.warn('loadProblems for item:', e); }
+
+  // Load simple submissions cho item này
+  let simpleSubs = [];
+  try {
+    const allSubs = await apiFetch('/submissions/simple');
+    const item = allItems.find(i => i.id === itemId);
+    simpleSubs = (allSubs || []).filter(s =>
+      s.item_id === itemId || (item && s.item_title === item.title)
+    ).sort((a,b) => new Date(b.submitted_at||0) - new Date(a.submitted_at||0));
+    _subCountByItemProb[itemId] = simpleSubs.length;
+    renderProbItemList(); // update badge
+  } catch(e) { console.warn('loadSimpleSubs for item:', e); }
+
+  // Render cột phải
+  let html = '';
+
+  // === Phần 1: Bài nộp học sinh ===
+  html += `<div style="margin-bottom:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 style="font-size:.92rem;font-weight:800;color:var(--text-dark);display:flex;align-items:center;gap:7px">
+        📥 Bài nộp học sinh <span style="background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:9px;font-size:.75rem">${simpleSubs.length}</span>
+      </h3>
+    </div>`;
+  if (!simpleSubs.length) {
+    html += `<div style="background:var(--blue-frost);border-radius:10px;padding:18px;text-align:center;color:var(--text-muted);font-size:.84rem">📭 Học sinh chưa nộp bài này</div>`;
+  } else {
+    html += `<div style="border:1.5px solid var(--blue-pale);border-radius:12px;overflow:hidden">
+      <table class="sub-table">
+        <thead><tr><th>#</th><th>Học sinh</th><th>Ngôn ngữ</th><th>Code</th><th>Thời gian</th></tr></thead>
+        <tbody>`;
+    simpleSubs.forEach((s, i) => {
+      html += `<tr>
+        <td style="color:var(--text-muted);font-weight:700;font-size:.75rem">${i+1}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--blue-mid));color:white;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(s.student_name||'?').charAt(0).toUpperCase()}</div>
+            <strong>${esc(s.student_name||'—')}</strong>
+          </div>
+        </td>
+        <td><code style="background:var(--blue-pale);padding:2px 7px;border-radius:5px;font-size:.75rem">${esc(s.language||'—')}</code></td>
+        <td>${s.source_code ? `<button class="btn btn-pri btn-sm" onclick="viewSimpleCode('${esc(s.id||'')}',${i})">👁 Xem code</button>` : '—'}</td>
+        <td style="color:var(--text-muted);font-size:.75rem;white-space:nowrap">${s.submitted_at ? new Date(s.submitted_at).toLocaleString('vi-VN') : '—'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+  html += `</div>`;
+
+  // === Phần 2: Judge problems ===
+  html += `<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 style="font-size:.92rem;font-weight:800;color:var(--text-dark);display:flex;align-items:center;gap:7px">
+        💻 Bài tập Judge <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:9px;font-size:.75rem">${problems.length}</span>
+      </h3>
+      <button class="btn btn-pri btn-sm" onclick="showCreateProbModalForItem('${itemId}')">➕ Thêm Judge</button>
+    </div>`;
+  if (!problems.length) {
+    html += `<div style="background:var(--blue-frost);border-radius:10px;padding:18px;text-align:center;color:var(--text-muted);font-size:.84rem">
+      Chưa có bài judge. Nhấn <strong>➕ Thêm Judge</strong> để thêm testcase tự động chấm.
+    </div>`;
+  } else {
+    html += `<div class="prob-list">${problems.map(p => `
+      <div class="prob-item">
+        <div style="flex:1">
+          <h3>💻 ${esc(p.title)}</h3>
+          <div class="meta">⏱${p.time_limit_ms}ms · ${(p.allowed_languages||[]).join(', ')}</div>
+        </div>
+        <div class="prob-actions">
+          <button class="btn btn-warn btn-sm" onclick="openTestcaseModal('${p.id}','${esc(p.title)}')">🧪 Testcase</button>
+          <button class="btn btn-sec btn-sm" onclick="editProblem('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}','${esc(p.title)}')">🗑</button>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+  html += `</div>`;
+
+  body.innerHTML = html;
+}
+
+function showCreateProbModalForItem(itemId) {
+  showCreateProbModal();
+  setTimeout(() => {
+    const sel = document.getElementById('probItemId');
+    if (sel && itemId) sel.value = itemId;
+  }, 50);
+}
+
+// loadProblems giữ lại cho compat (subFilterProb)
+async function loadProblems() {
+  const itemId = document.getElementById('itemFilter')?.value || '';
+  let problems = [];
+  if (!itemId) {
+    for (const item of allItems) {
+      try {
+        const data = await apiFetch(`/problems?item_id=${item.id}`);
+        problems.push(...(data||[]).map(p=>({...p, _itemTitle:item.title, _section:item.section})));
+      } catch(_) {}
+    }
+  } else {
+    try {
+      const data = await apiFetch(`/problems?item_id=${itemId}`);
+      const item = allItems.find(i=>i.id===itemId);
+      problems = (data||[]).map(p=>({...p, _itemTitle:item?.title||'', _section:item?.section||''}));
+    } catch(e) {}
+  }
+  allProblems = problems;
+  const probOpts = problems.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join('');
+  const sel = document.getElementById('subFilterProb');
+  if (sel) sel.innerHTML = '<option value="">— Tất cả bài tập —</option>' + probOpts;
 }
 
 // ════════════════════════════════════════════════════
@@ -829,6 +1041,7 @@ function setTab(el, tabId) {
   el.classList.add('active');
   document.querySelectorAll('main > div').forEach(d => d.style.display = 'none');
   document.getElementById(tabId).style.display = '';
+  if (tabId === 'tabProblems')   renderProbItemList();
   if (tabId === 'tabSubmissions') loadSubmissions();
   if (tabId === 'tabSimpleSubs') {
     renderItemList();
