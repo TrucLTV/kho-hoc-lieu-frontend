@@ -555,6 +555,46 @@ code {
         </div>
       </div>
 
+      <!-- Bài nộp học sinh của bài tập này -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="icon">📬</div>
+            Bài nộp học sinh
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="iSubCount" style="font-size:.75rem;color:#8c959f;display:none"></span>
+            <div class="select-wrapper" style="min-width:180px">
+              <select id="iFilterStudent" class="form-select" onchange="renderSubsTable()">
+                <option value="">— Tất cả học sinh —</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="_refreshItemSubs()">🔄</button>
+          </div>
+        </div>
+        <div class="card-body no-pad">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Học sinh</th>
+                  <th>Ngôn ngữ</th>
+                  <th>Điểm</th>
+                  <th>Code</th>
+                  <th>Thời gian</th>
+                </tr>
+              </thead>
+              <tbody id="iSubTableBody">
+                <tr><td colspan="6"><div class="empty" style="padding:28px">
+                  <div class="empty-icon">📭</div><p>Học sinh chưa nộp bài này.</p>
+                </div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
