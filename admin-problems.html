@@ -494,9 +494,7 @@ code {
       <button class="tab" onclick="setTab(this,'tabSubmissions')">
         🏆 Chấm tự động <span class="tab-count" id="tabCountJudge">—</span>
       </button>
-      <button class="tab" onclick="setTab(this,'tabSimpleSubs')">
-        📥 Bài nộp HS <span class="tab-count" id="tabCountSub">—</span>
-      </button>
+
     </div>
     <button class="btn btn-primary btn-sm" onclick="showCreateProbModal()">+ Tạo bài tập</button>
   </div>
@@ -538,47 +536,6 @@ code {
         </div>
         <div class="banner-actions">
           <button class="btn btn-success btn-sm" onclick="_createProbForSelected()">+ Thêm Judge</button>
-        </div>
-      </div>
-
-      <!-- Bài nộp học sinh cho bài này -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <div class="icon">📥</div>
-            Bài nộp học sinh
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="select-wrapper" style="min-width:160px">
-              <select id="iFilterStudent" class="form-select" style="font-size:.8rem;padding:6px 30px 6px 10px" onchange="renderSubsTable()">
-                <option value="">— Tất cả học sinh —</option>
-              </select>
-            </div>
-            <span id="iSubCount" class="badge badge-blue"></span>
-            <button class="btn btn-secondary btn-sm" onclick="_refreshItemSubs()">🔄</button>
-          </div>
-        </div>
-        <div class="card-body no-pad">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Học sinh</th>
-                  <th>Ngôn ngữ</th>
-                  <th>Điểm / Trạng thái</th>
-                  <th>Source code</th>
-                  <th>Thời gian nộp</th>
-                </tr>
-              </thead>
-              <tbody id="iSubTableBody">
-                <tr><td colspan="6"><div class="empty" style="padding:32px">
-                  <div class="empty-icon">📭</div>
-                  <p>Chọn bài tập ở trên để xem bài nộp</p>
-                </div></td></tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
 
@@ -686,91 +643,6 @@ code {
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       TAB 3: BÀI NỘP HỌC SINH (2-col)
-  ══════════════════════════════════════════ -->
-  <div id="tabSimpleSubs" style="display:none">
-    <div class="two-col">
-
-      <!-- CỘT TRÁI: Danh sách bài tập -->
-      <div class="item-sidebar">
-        <div class="card" style="overflow:hidden">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="icon">📚</div>
-              Bài tập
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="loadSimpleSubs()" title="Tải lại">🔄</button>
-          </div>
-          <div class="sidebar-search">
-            <input id="ssSearchItem" type="text" placeholder="🔍 Tìm bài tập…" oninput="renderItemList()"/>
-          </div>
-          <div class="item-list-scroll" id="ssItemList">
-            <div class="empty" style="padding:24px">
-              <div class="empty-icon">⏳</div><p>Đang tải…</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CỘT PHẢI: Bài nộp -->
-      <div>
-        <!-- Stat summary (hiện khi chọn bài) -->
-        <div id="ssStatRow" class="stat-row" style="display:none">
-          <div class="stat-chip">
-            <div><div class="val" id="ssTotalSubs">0</div><div class="lbl">Bài nộp</div></div>
-          </div>
-          <div class="stat-chip">
-            <div><div class="val" id="ssUniqStudents">0</div><div class="lbl">Học sinh</div></div>
-          </div>
-          <div class="stat-chip">
-            <div><div class="val" id="ssAvgScore" style="color:var(--accent)">—</div><div class="lbl">Điểm TB</div></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <div class="icon">📥</div>
-              <span id="ssTableTitle">Chọn một bài tập để xem bài nộp</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="select-wrapper">
-                <select id="simpleSubFilterStudent" class="form-select" style="font-size:.8rem;padding:6px 28px 6px 10px" onchange="renderSimpleSubs()">
-                  <option value="">— Tất cả —</option>
-                </select>
-              </div>
-              <span id="simpleSubCount" class="badge badge-blue" style="display:none"></span>
-            </div>
-          </div>
-          <div class="card-body no-pad">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Học sinh</th>
-                    <th>Ngôn ngữ</th>
-                    <th>Điểm / Trạng thái</th>
-                    <th>Source code</th>
-                    <th>Thời gian nộp</th>
-                  </tr>
-                </thead>
-                <tbody id="simpleSubTableBody">
-                  <tr><td colspan="6"><div class="empty" style="padding:48px">
-                    <div class="empty-icon">👈</div>
-                    <p>Chọn một bài tập ở cột bên trái để xem bài nộp</p>
-                  </div></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <input type="hidden" id="simpleSubFilterItem" value=""/>
-  </div>
 
 </main>
 
@@ -1656,16 +1528,11 @@ function viewSimpleCode(subId, fallbackIdx) {
 function setTab(el, tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['tabProblems','tabSubmissions','tabSimpleSubs'].forEach(id => {
+  ['tabProblems','tabSubmissions'].forEach(id => {
     document.getElementById(id).style.display = id === tabId ? '' : 'none';
   });
   if (tabId === 'tabProblems')    buildItemDropdown();
   if (tabId === 'tabSubmissions') loadSubmissions();
-  if (tabId === 'tabSimpleSubs')  {
-    renderItemList();
-    if (!_allSimpleSubs.length) loadSimpleSubs();
-    else { renderItemList(); renderSimpleSubs(); }
-  }
 }
 
 // ════════════════════════════════════════════════════
