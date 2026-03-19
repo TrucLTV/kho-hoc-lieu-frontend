@@ -712,10 +712,10 @@ function showTcDetail(idx) {
         <div class="tc-detail-lbl">✅ Output mong đợi</div>
         <div class="tc-detail-val ok">${esc(r.expected || '')}</div>
       </div>
-    ` : `<div class="tc-detail-row"><div class="tc-detail-val" style="color:var(--text-muted);font-style:italic">Input/Output ẩn với testcase này</div></div>`}
+    ` : `<div class="tc-detail-row"><div class="tc-detail-val" style="color:var(--text-muted);font-style:italic">📌 Testcase ẩn – Input/Expected Output không hiển thị</div></div>`}
     <div class="tc-detail-row">
       <div class="tc-detail-lbl">📤 Output của bạn</div>
-      <div class="tc-detail-val ${r.passed?'ok':'err'}">${r.actual_output ? esc(r.actual_output) : '(trống)'}</div>
+      <div class="tc-detail-val ${r.passed?'ok':'err'}">${r.actual_output ? esc(r.actual_output) : '(trống – không có output)'}</div>
     </div>
     ${r.error_detail ? `
       <div class="tc-detail-row">
