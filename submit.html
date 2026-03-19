@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Nộp Bài Tập – Kho Học Liệu</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
-<!-- CodeMirror editor -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"/>
 <style>
@@ -21,7 +20,6 @@
 body{font-family:'Be Vietnam Pro',sans-serif;background:var(--blue-frost);color:var(--text-dark);min-height:100vh;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 10% 20%,rgba(44,123,229,.10) 0%,transparent 60%);pointer-events:none;z-index:0;}
 
-/* Header */
 header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%,var(--blue-bright) 100%);position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(10,37,64,.25);}
 .hdr{max-width:1300px;margin:auto;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
@@ -32,18 +30,15 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .btn-back{padding:7px 15px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.22);border-radius:18px;color:white;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;align-items:center;gap:6px;}
 .btn-back:hover{background:rgba(255,255,255,.22);}
 
-/* Layout */
 .layout{max-width:1300px;margin:0 auto;padding:24px 28px 60px;display:grid;grid-template-columns:1fr 1fr;gap:20px;position:relative;z-index:1;}
 @media(max-width:900px){.layout{grid-template-columns:1fr;}}
 
-/* Problem panel */
 .panel{background:white;border-radius:16px;box-shadow:var(--shadow-card);border:1.5px solid var(--blue-pale);overflow:hidden;}
 .panel-hdr{padding:18px 22px 14px;background:linear-gradient(135deg,var(--blue-navy),var(--blue-mid));color:white;}
 .panel-hdr h2{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px;}
 .panel-hdr p{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:4px;}
 .panel-body{padding:20px 22px;}
 
-/* Problem description */
 .prob-title{font-size:1.2rem;font-weight:800;color:var(--blue-deep);margin-bottom:6px;}
 .prob-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
 .meta-tag{padding:4px 12px;border-radius:12px;font-size:.74rem;font-weight:700;}
@@ -56,13 +51,11 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .sample-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
 @media(max-width:600px){.sample-pair{grid-template-columns:1fr;}}
 
-/* Tabs in problem */
 .p-tabs{display:flex;border-bottom:2px solid var(--blue-pale);margin:-20px -22px 18px;padding:0 22px;}
 .p-tab{padding:12px 18px;font-size:.84rem;font-weight:700;color:var(--text-muted);border-bottom:2.5px solid transparent;cursor:pointer;margin-bottom:-2px;transition:all .2s;}
 .p-tab.active{color:var(--blue-bright);border-bottom-color:var(--blue-bright);}
 .p-panel{display:none;} .p-panel.active{display:block;}
 
-/* Code editor panel */
 .editor-wrap{position:relative;}
 .lang-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
 .lang-sel{padding:8px 12px;border:2px solid var(--blue-pale);border-radius:10px;font-family:inherit;font-size:.84rem;font-weight:600;color:var(--text-dark);background:white;outline:none;cursor:pointer;}
@@ -77,13 +70,9 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .btn-danger{background:white;color:var(--danger);border:2px solid #fecaca;}
 .btn-danger:hover{background:#fef2f2;}
 
-/* CodeMirror overrides */
 .CodeMirror{height:380px;border-radius:10px;font-size:.88rem;border:2px solid var(--blue-pale);transition:border-color .2s;}
 .CodeMirror-focused{border-color:var(--blue-bright);}
-.code-placeholder{height:380px;border-radius:10px;border:2px dashed var(--blue-pale);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--text-muted);}
 
-/* Result panel */
-.result-section{margin-top:18px;}
 .verdict{padding:16px 18px;border-radius:12px;display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .verdict-ac{background:#d1fae5;border:1.5px solid #6ee7b7;}
 .verdict-wa{background:#fee2e2;border:1.5px solid #fca5a5;}
@@ -100,12 +89,10 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .score-big{font-size:2rem;font-weight:900;margin-left:auto;color:var(--blue-mid);}
 .score-big.ac{color:#059669;} .score-big.wa{color:#dc2626;} .score-big.pa{color:#d97706;}
 
-/* Testcase results */
 .tc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;margin-bottom:14px;}
 .tc-btn{width:52px;height:52px;border-radius:10px;border:none;cursor:pointer;font-size:.78rem;font-weight:700;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .tc-pass{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;}
 .tc-fail{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;}
-.tc-hidden{background:var(--gray-soft);color:var(--text-muted);border:1.5px solid var(--blue-pale);}
 .tc-btn.selected{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.15);}
 
 .tc-detail{background:var(--blue-frost);border:1.5px solid var(--blue-pale);border-radius:12px;padding:16px;font-size:.85rem;}
@@ -115,7 +102,6 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .tc-detail-val.err{background:#fef2f2;border-color:#fca5a5;color:#991b1b;}
 .tc-detail-val.ok{background:#f0fdf4;border-color:#6ee7b7;color:#065f46;}
 
-/* History list */
 .hist-list{display:flex;flex-direction:column;gap:8px;}
 .hist-item{padding:12px 15px;background:white;border:1.5px solid var(--blue-pale);border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s;}
 .hist-item:hover{border-color:var(--blue-light);box-shadow:0 2px 10px rgba(44,123,229,.10);}
@@ -126,27 +112,49 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .hist-meta{font-size:.78rem;color:var(--text-muted);margin-top:2px;}
 .hist-score{font-size:1.1rem;font-weight:800;margin-left:auto;color:var(--blue-mid);}
 
-/* Loading spinner */
 .spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Empty state */
 .empty{text-align:center;padding:40px 20px;color:var(--text-muted);}
 .empty-ico{font-size:42px;margin-bottom:10px;}
 .empty p{font-size:.88rem;}
 
-/* Toast */
 .toast{position:fixed;bottom:28px;right:28px;padding:13px 20px;border-radius:12px;font-size:.86rem;font-weight:600;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.15);animation:slideUp .3s ease;display:none;}
 .toast.show{display:block;}
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .toast-ok{background:#065f46;color:white;} .toast-err{background:#991b1b;color:white;}
 
-/* Problem selector */
 .prob-select-list{display:flex;flex-direction:column;gap:8px;}
 .prob-select-item{padding:14px 18px;background:white;border:2px solid var(--blue-pale);border-radius:12px;cursor:pointer;transition:all .2s;}
 .prob-select-item:hover,.prob-select-item.active{border-color:var(--blue-bright);background:var(--blue-frost);}
 .prob-select-item h3{font-size:.95rem;font-weight:700;color:var(--text-dark);}
 .prob-select-item .meta{font-size:.76rem;color:var(--text-muted);margin-top:3px;}
+
+/* ── Judge Server Config Banner ── */
+#judgeConfigBanner {
+  max-width:1300px;margin:16px auto 0;padding:0 28px;position:relative;z-index:2;
+}
+.judge-config-box {
+  background:white;border:2px solid #fcd34d;border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 2px 12px rgba(251,191,36,.15);
+}
+.judge-status-dot {
+  width:10px;height:10px;border-radius:50%;background:#d1d5db;flex-shrink:0;
+  transition:background .3s;
+}
+.judge-status-dot.online{background:#10b981;}
+.judge-status-dot.offline{background:#ef4444;}
+.judge-config-label{font-size:.8rem;font-weight:700;color:#92400e;white-space:nowrap;}
+.judge-url-input {
+  flex:1;min-width:280px;padding:7px 12px;border:1.5px solid #fde68a;border-radius:8px;
+  font-family:'Courier New',monospace;font-size:.82rem;color:var(--text-dark);
+  background:#fffbeb;outline:none;transition:border-color .2s;
+}
+.judge-url-input:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.1);}
+.btn-check{padding:7px 14px;background:#f59e0b;color:white;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-check:hover{background:#d97706;}
+.judge-status-text{font-size:.78rem;font-weight:600;color:var(--text-muted);white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -164,8 +172,22 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
   </div>
 </header>
 
+<!-- ── Judge Server Config ── -->
+<div id="judgeConfigBanner">
+  <div class="judge-config-box">
+    <div class="judge-status-dot" id="judgeStatusDot"></div>
+    <span class="judge-config-label">🖥️ Judge Server (ngrok):</span>
+    <input type="text" id="judgeUrlInput" class="judge-url-input"
+      placeholder="https://xxxx.ngrok-free.app"
+      value=""
+    />
+    <button class="btn-check" onclick="saveAndCheckJudge()">✅ Kết nối</button>
+    <span class="judge-status-text" id="judgeStatusText">Chưa kết nối</span>
+  </div>
+</div>
+
 <!-- Khi chưa chọn bài -->
-<div id="selectScreen" style="max-width:700px;margin:40px auto;padding:0 24px;position:relative;z-index:1;">
+<div id="selectScreen" style="max-width:700px;margin:24px auto;padding:0 24px;position:relative;z-index:1;">
   <div class="panel">
     <div class="panel-hdr">
       <h2>💻 Bài Tập Lập Trình</h2>
@@ -194,11 +216,9 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
         <div class="p-tab" onclick="switchPTab(this,'pHistory')">📋 Lịch sử nộp</div>
       </div>
 
-      <!-- Đề bài tab -->
       <div id="pDesc" class="p-panel active">
         <div class="prob-meta" id="probTags"></div>
         <div id="probDesc" class="prob-text"></div>
-
         <div id="blockInputFmt" style="display:none">
           <div class="section-title">📥 Định dạng Input</div>
           <div id="probInputFmt" class="prob-text"></div>
@@ -211,11 +231,9 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
           <div class="section-title">⚠️ Ràng buộc</div>
           <div id="probConstraints" class="prob-text"></div>
         </div>
-
         <div id="samplesWrap"></div>
       </div>
 
-      <!-- Lịch sử nộp tab -->
       <div id="pHistory" class="p-panel">
         <div id="histList" class="hist-list">
           <div class="empty"><div class="empty-ico">📭</div><p>Bạn chưa nộp bài lần nào.</p></div>
@@ -226,8 +244,6 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 
   <!-- CỘT PHẢI: Editor + kết quả -->
   <div style="display:flex;flex-direction:column;gap:18px;">
-
-    <!-- Editor -->
     <div class="panel">
       <div class="panel-hdr">
         <h2>✏️ Viết Code</h2>
@@ -254,7 +270,6 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
       </div>
     </div>
 
-    <!-- Kết quả -->
     <div id="resultPanel" class="panel" style="display:none;">
       <div class="panel-hdr">
         <h2>🏆 Kết Quả Chấm</h2>
@@ -262,13 +277,11 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
       </div>
       <div class="panel-body" id="resultBody"></div>
     </div>
-
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
-<!-- CodeMirror -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
@@ -278,12 +291,15 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 // ════════════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════════════
-const API = (localStorage.getItem('khl_api') || 'http://localhost:3001') + '/api';
+const BACKEND_API = 'https://kho-hoc-lieu-backend.onrender.com/api';
 const token = () => localStorage.getItem('khl_token');
 
-// Lấy params từ URL
-const params  = new URLSearchParams(location.search);
-const ITEM_ID = params.get('item_id');
+// Judge Server URL (ngrok) — lưu trong localStorage để nhớ khi F5
+let JUDGE_URL = localStorage.getItem('khl_judge_url') || '';
+if (JUDGE_URL) document.getElementById('judgeUrlInput').value = JUDGE_URL;
+
+const params   = new URLSearchParams(location.search);
+const ITEM_ID  = params.get('item_id');
 const ITEM_TITLE = decodeURIComponent(params.get('title') || 'Bài tập');
 
 // ════════════════════════════════════════════════════
@@ -294,7 +310,6 @@ let currentProb = null;
 let editor = null;
 let selectedResult = null;
 
-// Code templates
 const TEMPLATES = {
   python:
 `# Đọc input: input() hoặc sys.stdin
@@ -304,7 +319,7 @@ n = int(input())
 print(n)
 `,
   javascript:
-`// Đọc input qua readline (được inject sẵn)
+`// Đọc input qua readline
 // In output: console.log()
 
 const n = parseInt(readline());
@@ -337,33 +352,56 @@ int main() {
 };
 
 // ════════════════════════════════════════════════════
+// JUDGE SERVER CONFIG
+// ════════════════════════════════════════════════════
+async function saveAndCheckJudge() {
+  const url = document.getElementById('judgeUrlInput').value.trim().replace(/\/$/, '');
+  if (!url) { showToast('Vui lòng nhập URL ngrok', 'err'); return; }
+
+  JUDGE_URL = url;
+  localStorage.setItem('khl_judge_url', url);
+
+  const dot  = document.getElementById('judgeStatusDot');
+  const text = document.getElementById('judgeStatusText');
+  dot.className  = 'judge-status-dot';
+  text.textContent = '⏳ Đang kiểm tra...';
+
+  try {
+    const res = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      dot.className  = 'judge-status-dot online';
+      text.textContent = '✅ Đã kết nối!';
+      document.querySelector('.judge-config-box').style.borderColor = '#6ee7b7';
+      showToast('✅ Judge Server đã kết nối!', 'ok');
+    } else throw new Error('bad response');
+  } catch(e) {
+    dot.className  = 'judge-status-dot offline';
+    text.textContent = '❌ Không kết nối được';
+    document.querySelector('.judge-config-box').style.borderColor = '#fca5a5';
+    showToast('❌ Không kết nối được Judge Server. Kiểm tra ngrok và server.js có đang chạy không.', 'err');
+  }
+}
+
+// Tự động kiểm tra nếu đã có URL lưu sẵn
+window.addEventListener('load', () => {
+  if (JUDGE_URL) saveAndCheckJudge();
+});
+
+// ════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════
 (async () => {
-  // Kiểm tra đăng nhập
   if (!token()) { location.href = 'index.html'; return; }
-
   const user = parseJwt(token());
   document.getElementById('userChip').textContent = `👤 ${user?.name || 'Học sinh'}`;
-
-  if (!ITEM_ID) {
-    showToast('Thiếu item_id trong URL', 'err');
-    return;
-  }
-
+  if (!ITEM_ID) { showToast('Thiếu item_id trong URL', 'err'); return; }
   document.getElementById('itemTitle').textContent = ITEM_TITLE;
 
-  // Khởi tạo editor
   editor = CodeMirror.fromTextArea(document.getElementById('codeArea'), {
-    mode: 'python',
-    theme: 'dracula',
-    lineNumbers: true,
-    indentUnit: 4,
-    tabSize: 4,
-    indentWithTabs: false,
-    lineWrapping: false,
-    autoCloseBrackets: true,
-    matchBrackets: true,
+    mode: 'python', theme: 'dracula', lineNumbers: true,
+    indentUnit: 4, tabSize: 4, indentWithTabs: false,
+    lineWrapping: false, autoCloseBrackets: true, matchBrackets: true,
     extraKeys: { "Tab": cm => cm.execCommand("indentMore") }
   });
   editor.setValue(TEMPLATES.python);
@@ -373,33 +411,26 @@ int main() {
 })();
 
 // ════════════════════════════════════════════════════
-// LOAD PROBLEMS
+// LOAD PROBLEMS (từ backend Render)
 // ════════════════════════════════════════════════════
 async function loadProblems() {
   try {
-    const res  = await apiFetch(`/problems?item_id=${ITEM_ID}`);
-    problems   = await res.json();
+    const res = await backendFetch(`/problems?item_id=${ITEM_ID}`);
+    problems  = await res.json();
 
-    if (problems.length === 0) {
+    if (!problems.length) {
       document.getElementById('probSelectList').innerHTML =
         '<div class="empty"><div class="empty-ico">🚫</div><p>Chưa có bài tập lập trình nào cho mục này.</p></div>';
       return;
     }
+    if (problems.length === 1) { selectProblem(problems[0]); return; }
 
-    if (problems.length === 1) {
-      // Chỉ 1 bài → vào thẳng
-      selectProblem(problems[0]);
-      return;
-    }
-
-    // Nhiều bài → hiển thị danh sách chọn
     document.getElementById('probSelectList').innerHTML = problems.map((p,i) => `
       <div class="prob-select-item" onclick="selectProblem(problems[${i}])">
         <h3>💻 ${esc(p.title)}</h3>
-        <div class="meta">${p.sample_testcases?.length || 0} ví dụ · ${p.allowed_languages?.join(', ')}</div>
+        <div class="meta">${p.sample_testcases?.length||0} ví dụ · ${p.allowed_languages?.join(', ')}</div>
       </div>
     `).join('');
-
   } catch(e) {
     showToast('Lỗi tải bài tập: ' + e.message, 'err');
   }
@@ -413,25 +444,21 @@ function selectProblem(prob) {
   document.getElementById('selectScreen').style.display = 'none';
   document.getElementById('mainLayout').style.display = 'grid';
 
-  // Điền đề bài
   document.getElementById('probTitle').textContent = prob.title;
   document.getElementById('probMeta').textContent =
     `⏱ ${prob.time_limit_ms}ms · 💾 ${prob.memory_limit_mb}MB · ${(prob.allowed_languages||[]).join(', ')}`;
-
   document.getElementById('probDesc').textContent = prob.description;
 
-  setBlock('blockInputFmt',  'probInputFmt',   prob.input_format);
-  setBlock('blockOutputFmt', 'probOutputFmt',  prob.output_format);
-  setBlock('blockConstraints','probConstraints',prob.constraints);
+  setBlock('blockInputFmt',   'probInputFmt',   prob.input_format);
+  setBlock('blockOutputFmt',  'probOutputFmt',  prob.output_format);
+  setBlock('blockConstraints','probConstraints', prob.constraints);
 
-  // Tags
   document.getElementById('probTags').innerHTML = `
     <span class="meta-tag tag-time">⏱ ${prob.time_limit_ms}ms</span>
     <span class="meta-tag tag-mem">💾 ${prob.memory_limit_mb}MB</span>
     ${(prob.allowed_languages||[]).map(l=>`<span class="meta-tag tag-lang">${l}</span>`).join('')}
   `;
 
-  // Sample testcases
   const samples = prob.sample_testcases || [];
   document.getElementById('samplesWrap').innerHTML = samples.length ? `
     <div class="section-title">🧪 Ví dụ</div>
@@ -452,17 +479,14 @@ function selectProblem(prob) {
     `).join('')}
   ` : '';
 
-  // Filter ngôn ngữ được phép
   const allowed = prob.allowed_languages || [];
   const sel = document.getElementById('langSel');
   Array.from(sel.options).forEach(o => {
     o.disabled = allowed.length > 0 && !allowed.includes(o.value);
   });
-  // Chọn ngôn ngữ đầu tiên được phép
   const firstAllowed = allowed[0] || 'python';
   sel.value = firstAllowed;
   onLangChange();
-
   loadHistory();
 }
 
@@ -489,36 +513,114 @@ function resetCode() {
 }
 
 // ════════════════════════════════════════════════════
-// SUBMIT
+// SUBMIT — gọi Judge Server local, lưu kết quả lên Render
 // ════════════════════════════════════════════════════
 async function submitCode() {
   if (!currentProb) return;
+
   const source_code = editor.getValue().trim();
   if (!source_code) { showToast('Code không được để trống!', 'err'); return; }
+
   const language = document.getElementById('langSel').value;
+
+  // Kiểm tra Judge Server
+  if (!JUDGE_URL) {
+    showToast('⚠️ Bạn chưa nhập URL Judge Server (ngrok) ở trên!', 'err');
+    document.getElementById('judgeUrlInput').focus();
+    return;
+  }
 
   const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
   document.getElementById('submitLabel').innerHTML = '<span class="spinner"></span> Đang chấm...';
 
-  // Show result panel với trạng thái đang chấm
   document.getElementById('resultPanel').style.display = '';
   document.getElementById('resultBody').innerHTML = renderVerdict({ status: 'judging', score: 0 });
 
   try {
-    const res = await apiFetch('/submissions', 'POST', { problem_id: currentProb.id, language, source_code });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Lỗi server');
+    // ── BƯỚC 1: Lấy testcase từ backend Render ──
+    const probRes  = await backendFetch(`/problems/${currentProb.id}`);
+    const probData = await probRes.json();
+    const testcases = (probData.testcases || []).map(tc => ({
+      input:     tc.input    || '',
+      expected:  tc.expected || tc.expected_output || '',
+      is_sample: tc.is_sample,
+      weight:    tc.score_weight || tc.weight || 1
+    }));
+
+    if (!testcases.length) {
+      showToast('⚠️ Bài này chưa có testcase. Admin cần thêm testcase trước.', 'err');
+      document.getElementById('resultBody').innerHTML = `<div class="verdict verdict-err"><span class="verdict-ico">⚠️</span><div class="verdict-text"><h3>Chưa có testcase</h3><div class="verdict-sub">Admin cần thêm testcase cho bài này</div></div></div>`;
+      return;
     }
-    const data = await res.json();
-    renderResult(data);
-    loadHistory(); // Cập nhật lịch sử
+
+    // ── BƯỚC 2: Gửi code lên Judge Server local (qua ngrok) ──
+    const judgeRes = await fetch(JUDGE_URL + '/judge', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'   // bỏ qua trang cảnh báo của ngrok free
+      },
+      body: JSON.stringify({ code: source_code, language, testcases }),
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!judgeRes.ok) throw new Error('Judge Server lỗi: ' + judgeRes.status);
+    const judgeData = await judgeRes.json();
+
+    // ── BƯỚC 3: Lưu kết quả lên backend Render ──
+    const saveRes = await backendFetch('/submissions', 'POST', {
+      problem_id:  currentProb.id,
+      language,
+      source_code,
+      status:       judgeData.status?.toLowerCase().replace(/ /g,'_') || 'wrong_answer',
+      score:        judgeData.score  ?? 0,
+      passed_tests: judgeData.passed ?? 0,
+      total_tests:  judgeData.total  ?? testcases.length,
+      results:      (judgeData.results || []).map(r => ({
+        passed:        r.passed,
+        exec_time_ms:  r.time   || 0,
+        actual_output: r.actual || '',
+        expected:      r.expected || null,
+        is_sample:     r.is_sample,
+        error_detail:  r.status === 'Time Limit Exceeded' ? 'Time Limit Exceeded'
+                     : r.status === 'Runtime Error'       ? 'Runtime Error'
+                     : null
+      }))
+    });
+
+    // Build kết quả để hiển thị
+    const displayData = {
+      status:       judgeData.status?.toLowerCase().replace(/ /g,'_') || 'wrong_answer',
+      score:        judgeData.score  ?? 0,
+      passed_tests: judgeData.passed ?? 0,
+      total_tests:  judgeData.total  ?? testcases.length,
+      error_msg:    judgeData.detail || null,
+      results:      (judgeData.results || []).map((r, i) => ({
+        passed:        r.passed,
+        exec_time_ms:  r.time || 0,
+        actual_output: r.actual || '',
+        expected:      r.expected || null,
+        is_sample:     testcases[i]?.is_sample,
+        input:         testcases[i]?.is_sample ? testcases[i]?.input : null,
+        error_detail:  r.status === 'Time Limit Exceeded' ? 'Time Limit Exceeded'
+                     : r.status === 'Runtime Error'       ? 'Runtime Error'
+                     : null
+      }))
+    };
+
+    renderResult(displayData);
+    loadHistory();
+
   } catch(e) {
-    showToast('Lỗi nộp bài: ' + e.message, 'err');
+    let msg = e.message || 'Lỗi không xác định';
+    if (msg.includes('timeout') || msg.includes('abort')) msg = 'Judge Server không phản hồi (timeout 30s). Kiểm tra server và ngrok đang chạy.';
+    if (msg.includes('Failed to fetch')) msg = 'Không kết nối được Judge Server. Kiểm tra URL ngrok và server có đang chạy không.';
+    showToast('❌ ' + msg, 'err');
     document.getElementById('resultBody').innerHTML = `
       <div class="verdict verdict-err"><span class="verdict-ico">❌</span>
-        <div class="verdict-text"><h3>Lỗi kết nối</h3><div class="verdict-sub">${esc(e.message)}</div></div>
+        <div class="verdict-text"><h3>Lỗi kết nối</h3>
+        <div class="verdict-sub">${esc(msg)}</div></div>
       </div>`;
   } finally {
     btn.disabled = false;
@@ -531,10 +633,11 @@ async function submitCode() {
 // ════════════════════════════════════════════════════
 function renderVerdict(sub) {
   const verdictMap = {
-    accepted:    { cls:'ac',  ico:'✅', label:'Accepted – Chính xác!' },
-    wrong_answer:{ cls:'wa',  ico:'❌', label:'Wrong Answer – Sai kết quả' },
-    partial:     { cls:'pa',  ico:'⚠️', label:'Partial – Đúng một phần' },
-    error:       { cls:'err', ico:'🔴', label:'Runtime Error' },
+    accepted:    { cls:'ac',      ico:'✅', label:'Accepted – Chính xác!' },
+    wrong_answer:{ cls:'wa',      ico:'❌', label:'Wrong Answer – Sai kết quả' },
+    partial:     { cls:'pa',      ico:'⚠️', label:'Partial – Đúng một phần' },
+    error:       { cls:'err',     ico:'🔴', label:'Runtime Error' },
+    compile_error:{ cls:'err',    ico:'🔴', label:'Compile Error' },
     judging:     { cls:'judging', ico:'⏳', label:'Đang chấm bài...' },
     pending:     { cls:'judging', ico:'⏳', label:'Chờ chấm...' },
   };
@@ -544,9 +647,9 @@ function renderVerdict(sub) {
       <span class="verdict-ico">${v.ico}</span>
       <div class="verdict-text">
         <h3>${v.label}</h3>
-        <div class="verdict-sub">${sub.passed_tests || 0}/${sub.total_tests || 0} testcase đúng</div>
+        <div class="verdict-sub">${sub.passed_tests||0}/${sub.total_tests||0} testcase đúng</div>
       </div>
-      <div class="score-big ${v.cls}">${sub.score ?? '—'}<span style="font-size:.55em">/100</span></div>
+      <div class="score-big ${v.cls}">${sub.score??'—'}<span style="font-size:.55em">/100</span></div>
     </div>`;
 }
 
@@ -562,7 +665,7 @@ function renderResult(data) {
     html += `<div style="font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px;">Kết quả testcase</div>`;
     html += `<div class="tc-grid" id="tcGrid">`;
     results.forEach((r, i) => {
-      const cls = r.passed ? 'tc-pass' : (r.is_sample === false && r.expected === null ? 'tc-hidden' : 'tc-fail');
+      const cls = r.passed ? 'tc-pass' : 'tc-fail';
       html += `<button class="tc-btn ${cls}" onclick="showTcDetail(${i})" id="tcBtn_${i}">
         <span>${r.passed ? '✓' : (r.error_detail ? '⚡' : '✗')}</span>
         <span>#${i+1}</span>
@@ -575,13 +678,12 @@ function renderResult(data) {
 
   document.getElementById('resultBody').innerHTML = html;
   document.getElementById('resultPanel').style.display = '';
-  document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('resultPanel').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function showTcDetail(idx) {
   if (!selectedResult) return;
   const r = selectedResult[idx];
-  // Highlight selected
   document.querySelectorAll('.tc-btn').forEach(b => b.classList.remove('selected'));
   const btn = document.getElementById('tcBtn_' + idx);
   if (btn) btn.classList.add('selected');
@@ -598,19 +700,19 @@ function showTcDetail(idx) {
       ${badge}
       <span style="font-size:.75rem;color:var(--text-muted)">${r.exec_time_ms}ms</span>
     </div>
-    ${r.is_sample && r.expected !== null ? `
+    ${r.is_sample && r.input !== null ? `
       <div class="tc-detail-row">
         <div class="tc-detail-lbl">📥 Input (ví dụ)</div>
-        <div class="tc-detail-val">${esc(selectedResult[idx]?.input || '(ẩn)')}</div>
+        <div class="tc-detail-val">${esc(r.input || '(ẩn)')}</div>
       </div>
       <div class="tc-detail-row">
         <div class="tc-detail-lbl">✅ Output mong đợi</div>
-        <div class="tc-detail-val ok">${esc(r.expected)}</div>
+        <div class="tc-detail-val ok">${esc(r.expected || '')}</div>
       </div>
     ` : `<div class="tc-detail-row"><div class="tc-detail-val" style="color:var(--text-muted);font-style:italic">Input/Output ẩn với testcase này</div></div>`}
     <div class="tc-detail-row">
       <div class="tc-detail-lbl">📤 Output của bạn</div>
-      <div class="tc-detail-val ${r.passed ? 'ok' : 'err'}">${r.actual_output ? esc(r.actual_output) : '(trống)'}</div>
+      <div class="tc-detail-val ${r.passed?'ok':'err'}">${r.actual_output ? esc(r.actual_output) : '(trống)'}</div>
     </div>
     ${r.error_detail ? `
       <div class="tc-detail-row">
@@ -627,51 +729,39 @@ function showTcDetail(idx) {
 async function loadHistory() {
   if (!currentProb) return;
   try {
-    const res  = await apiFetch(`/submissions?problem_id=${currentProb.id}`);
+    const res  = await backendFetch(`/submissions?problem_id=${currentProb.id}`);
     const data = await res.json();
     const el   = document.getElementById('histList');
-
     if (!data.length) {
       el.innerHTML = '<div class="empty"><div class="empty-ico">📭</div><p>Bạn chưa nộp bài lần nào.</p></div>';
       return;
     }
-
-    const statusMap = {
-      accepted:'b-ac', wrong_answer:'b-wa', partial:'b-pa', error:'b-err',
-      judging:'b-pend', pending:'b-pend'
-    };
-    const statusLabel = {
-      accepted:'✅ Accepted', wrong_answer:'❌ Wrong Answer', partial:'⚠️ Partial',
-      error:'🔴 Error', judging:'⏳ Judging', pending:'⏳ Pending'
-    };
-
+    const statusMap = { accepted:'b-ac', wrong_answer:'b-wa', partial:'b-pa', error:'b-err', judging:'b-pend', pending:'b-pend' };
+    const statusLabel = { accepted:'✅ Accepted', wrong_answer:'❌ Wrong Answer', partial:'⚠️ Partial', error:'🔴 Error', judging:'⏳ Judging', pending:'⏳ Pending' };
     el.innerHTML = data.map(s => `
       <div class="hist-item" onclick="loadSubmissionDetail('${s.id}')">
         <div>
-          <span class="hist-badge ${statusMap[s.status] || 'b-pend'}">${statusLabel[s.status] || s.status}</span>
+          <span class="hist-badge ${statusMap[s.status]||'b-pend'}">${statusLabel[s.status]||s.status}</span>
           <div class="hist-meta">${s.language} · ${s.passed_tests}/${s.total_tests} tests · ${formatDate(s.submitted_at)}</div>
         </div>
         <div class="hist-score">${s.score}<span style="font-size:.6em">/100</span></div>
       </div>
     `).join('');
-  } catch(e) {
-    console.error('loadHistory:', e);
-  }
+  } catch(e) { console.error('loadHistory:', e); }
 }
 
 async function loadSubmissionDetail(subId) {
   try {
-    const res  = await apiFetch(`/submissions/${subId}`);
+    const res  = await backendFetch(`/submissions/${subId}`);
     const data = await res.json();
     renderResult(data);
-    if (data.source_code) editor.setValue(data.source_code);
-    document.getElementById('langSel').value = data.language;
-    onLangChange();
-    editor.setValue(data.source_code || '');
+    if (data.source_code) {
+      document.getElementById('langSel').value = data.language;
+      onLangChange();
+      editor.setValue(data.source_code || '');
+    }
     switchPTab(document.querySelector('.p-tab'), 'pDesc');
-  } catch(e) {
-    showToast('Không tải được chi tiết submission', 'err');
-  }
+  } catch(e) { showToast('Không tải được chi tiết submission', 'err'); }
 }
 
 // ════════════════════════════════════════════════════
@@ -680,17 +770,17 @@ async function loadSubmissionDetail(subId) {
 function switchPTab(el, tabId) {
   document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.p-panel').forEach(p => p.classList.remove('active'));
-  if(el) el.classList.add('active');
+  if (el) el.classList.add('active');
   document.getElementById(tabId)?.classList.add('active');
 }
 
-async function apiFetch(path, method = 'GET', body) {
+async function backendFetch(path, method = 'GET', body) {
   const opts = {
     method,
     headers: { 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' }
   };
   if (body) opts.body = JSON.stringify(body);
-  return fetch(API + path, opts);
+  return fetch(BACKEND_API + path, opts);
 }
 
 function parseJwt(t) {
@@ -698,7 +788,7 @@ function parseJwt(t) {
 }
 
 function esc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function formatDate(iso) {
@@ -711,7 +801,7 @@ function showToast(msg, type = 'ok') {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = `toast toast-${type} show`;
-  setTimeout(() => el.classList.remove('show'), 3000);
+  setTimeout(() => el.classList.remove('show'), 3500);
 }
 </script>
 </body>
