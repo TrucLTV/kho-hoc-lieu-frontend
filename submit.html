@@ -367,7 +367,10 @@ async function saveAndCheckJudge() {
   text.textContent = '⏳ Đang kiểm tra...';
 
   try {
-    const res = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(url + '/health', {
+      signal: AbortSignal.timeout(5000),
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
     const data = await res.json();
     if (data.status === 'ok') {
       dot.className  = 'judge-status-dot online';
