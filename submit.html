@@ -155,6 +155,22 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
 .btn-check{padding:7px 14px;background:#f59e0b;color:white;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .btn-check:hover{background:#d97706;}
 .judge-status-text{font-size:.78rem;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+
+/* ── AI Review ── */
+.ai-review-wrap{margin-top:16px;border-radius:12px;overflow:hidden;border:1.5px solid #c4b5fd;}
+.ai-review-hdr{background:linear-gradient(135deg,#5b21b6,#7c3aed);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.ai-review-hdr-left{display:flex;align-items:center;gap:8px;color:white;font-weight:700;font-size:.88rem;}
+.ai-review-hdr-left span{font-size:1.1rem;}
+.btn-ai{padding:7px 14px;background:white;color:#5b21b6;border:none;border-radius:8px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-ai:hover:not(:disabled){background:#ede9fe;transform:translateY(-1px);}
+.btn-ai:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+.ai-review-body{background:#faf5ff;padding:16px;font-size:.9rem;line-height:1.75;color:#1e1b4b;min-height:60px;}
+.ai-review-body.loading{display:flex;align-items:center;gap:10px;color:#7c3aed;font-style:italic;}
+.ai-cursor{display:inline-block;width:2px;height:1em;background:#7c3aed;animation:blink .7s step-end infinite;vertical-align:text-bottom;margin-left:1px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.ai-review-body p{margin-bottom:10px;}
+.ai-review-body p:last-child{margin-bottom:0;}
+.ai-review-body strong{color:#5b21b6;}
 </style>
 </head>
 <body>
@@ -276,6 +292,16 @@ header{background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 60%
         <p>Chi tiết từng testcase</p>
       </div>
       <div class="panel-body" id="resultBody"></div>
+      <!-- AI Review -->
+      <div class="panel-body" style="padding-top:0" id="aiReviewSection" style="display:none">
+        <div class="ai-review-wrap">
+          <div class="ai-review-hdr">
+            <div class="ai-review-hdr-left"><span>🤖</span> Nhận xét từ AI</div>
+            <button class="btn-ai" id="btnAiReview" onclick="requestAiReview()">✨ Nhận xét bài làm</button>
+          </div>
+          <div class="ai-review-body" id="aiReviewBody" style="display:none"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -309,6 +335,7 @@ let problems = [];
 let currentProb = null;
 let editor = null;
 let selectedResult = null;
+let lastSubmitData = null; // lưu data để AI review
 
 const TEMPLATES = {
   python:
@@ -577,7 +604,7 @@ async function submitCode() {
       language,
       source_code,
       status:       judgeData.status?.toLowerCase().replace(/ /g,'_') || 'wrong_answer',
-      score:        judgeData.score  ?? 0,
+      score:        null,
       passed_tests: judgeData.passed ?? 0,
       total_tests:  judgeData.total  ?? testcases.length,
       results:      (judgeData.results || []).map(r => ({
@@ -595,7 +622,7 @@ async function submitCode() {
     // Build kết quả để hiển thị
     const displayData = {
       status:       judgeData.status?.toLowerCase().replace(/ /g,'_') || 'wrong_answer',
-      score:        judgeData.score  ?? 0,
+      score:        null,
       passed_tests: judgeData.passed ?? 0,
       total_tests:  judgeData.total  ?? testcases.length,
       error_msg:    judgeData.detail || null,
@@ -613,6 +640,21 @@ async function submitCode() {
     };
 
     renderResult(displayData);
+    lastSubmitData = {
+      probTitle:   currentProb.title,
+      probDesc:    currentProb.description || '',
+      language,
+      source_code,
+      passed:      displayData.passed_tests ?? 0,
+      total:       displayData.total_tests  ?? 0,
+      status:      displayData.status,
+      results:     displayData.results || []
+    };
+    // Hiện AI review section, reset nút
+    document.getElementById('aiReviewSection').style.display = '';
+    document.getElementById('aiReviewBody').style.display = 'none';
+    document.getElementById('btnAiReview').disabled = false;
+    document.getElementById('btnAiReview').textContent = '✨ Nhận xét bài làm';
     loadHistory();
 
   } catch(e) {
@@ -652,7 +694,6 @@ function renderVerdict(sub) {
         <h3>${v.label}</h3>
         <div class="verdict-sub">${sub.passed_tests||0}/${sub.total_tests||0} testcase đúng</div>
       </div>
-      <div class="score-big ${v.cls}">${sub.score??'—'}<span style="font-size:.55em">/100</span></div>
     </div>`;
 }
 
@@ -747,7 +788,6 @@ async function loadHistory() {
           <span class="hist-badge ${statusMap[s.status]||'b-pend'}">${statusLabel[s.status]||s.status}</span>
           <div class="hist-meta">${s.language} · ${s.passed_tests}/${s.total_tests} tests · ${formatDate(s.submitted_at)}</div>
         </div>
-        <div class="hist-score">${s.score}<span style="font-size:.6em">/100</span></div>
       </div>
     `).join('');
   } catch(e) { console.error('loadHistory:', e); }
@@ -765,6 +805,118 @@ async function loadSubmissionDetail(subId) {
     }
     switchPTab(document.querySelector('.p-tab'), 'pDesc');
   } catch(e) { showToast('Không tải được chi tiết submission', 'err'); }
+}
+
+// ════════════════════════════════════════════════════
+// AI REVIEW — gọi Anthropic API, stream nhận xét
+// ════════════════════════════════════════════════════
+async function requestAiReview() {
+  if (!lastSubmitData) return;
+
+  const btn  = document.getElementById('btnAiReview');
+  const body = document.getElementById('aiReviewBody');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang nhận xét...';
+  body.style.display = '';
+  body.className = 'ai-review-body loading';
+  body.innerHTML = '<span>🤖</span><span>AI đang đọc bài làm của bạn…</span>';
+
+  const { probTitle, probDesc, language, source_code, passed, total, status, results } = lastSubmitData;
+  const failedTcs = results.filter(r => !r.passed);
+  const passedCount = passed;
+  const totalCount  = total;
+
+  const failedSummary = failedTcs.length
+    ? failedTcs.slice(0, 5).map((r, i) => {
+        const tcNum = results.indexOf(r) + 1;
+        const parts = [`- Testcase #${tcNum} (${r.is_sample ? 'mẫu' : 'ẩn'}): FAILED`];
+        if (r.error_detail) parts.push(`  Lỗi: ${r.error_detail}`);
+        if (r.actual_output) parts.push(`  Output thực tế: ${r.actual_output.slice(0,100)}`);
+        if (r.expected)      parts.push(`  Output mong đợi: ${r.expected.slice(0,100)}`);
+        return parts.join('\n');
+      }).join('\n')
+    : 'Tất cả testcase đều đúng!';
+
+  const prompt = `Bạn là giáo viên lập trình thân thiện, đang nhận xét bài làm của học sinh.
+
+**Thông tin bài tập:** ${probTitle}
+${probDesc ? `Mô tả: ${probDesc.slice(0, 300)}` : ''}
+
+**Kết quả chấm:**
+- Số testcase đúng: ${passedCount}/${totalCount}
+- Trạng thái: ${status}
+${failedTcs.length ? `\n**Testcase sai:**\n${failedSummary}` : ''}
+
+**Code của học sinh (${language}):**
+\`\`\`${language}
+${source_code.slice(0, 1500)}
+\`\`\`
+
+Hãy nhận xét bài làm theo các ý sau (ngắn gọn, thân thiện, dùng tiếng Việt):
+1. **Nhận xét chung** về kết quả đạt được
+2. **Điểm tốt** trong code (nếu có)
+3. **Vấn đề cần sửa** (nếu sai testcase, gợi ý hướng sửa — không đưa code đáp án)
+4. **Lời khuyên** để cải thiện
+
+Viết ngắn gọn, tối đa 200 từ.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) throw new Error('API lỗi: ' + res.status);
+
+    body.className = 'ai-review-body';
+    body.innerHTML = '<span class="ai-cursor"></span>';
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let text = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const json = JSON.parse(raw);
+          const delta = json?.delta?.text || '';
+          if (delta) {
+            text += delta;
+            // Render markdown đơn giản: **bold**, xuống dòng
+            body.innerHTML = text
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\n\n/g, '</p><p>')
+              .replace(/\n/g, '<br>')
+              .replace(/^/, '<p>') + '</p>'
+              + '<span class="ai-cursor"></span>';
+          }
+        } catch {}
+      }
+    }
+
+    // Xóa cursor khi xong
+    body.innerHTML = body.innerHTML.replace('<span class="ai-cursor"></span>', '');
+    btn.textContent = '🔄 Nhận xét lại';
+    btn.disabled = false;
+
+  } catch(e) {
+    body.className = 'ai-review-body';
+    body.innerHTML = `<span style="color:#991b1b">❌ Không thể kết nối AI: ${esc(e.message)}</span>`;
+    btn.textContent = '✨ Thử lại';
+    btn.disabled = false;
+  }
 }
 
 // ════════════════════════════════════════════════════
